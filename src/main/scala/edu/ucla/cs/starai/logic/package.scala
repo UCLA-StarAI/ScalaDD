@@ -1,7 +1,6 @@
 package edu.ucla.cs.starai
 
 package object logic {
-
   
   implicit class Variable(val under: Int) extends AnyVal {
     
