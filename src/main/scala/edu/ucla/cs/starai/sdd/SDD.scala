@@ -64,7 +64,7 @@ trait SDDINode extends SDD with INode[SDD,SDDLeaf,SDDINode]{
 trait TrueLeaf extends SDDLeaf {
   def isConsistent = true
   def isValid = true
-  override def name = "true"
+  override def name = s"true (${vtree.variable})"
 }
 
 

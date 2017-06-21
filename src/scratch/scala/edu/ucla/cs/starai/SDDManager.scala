@@ -1,7 +1,7 @@
 package edu.ucla.cs.starai;
 
 import edu.ucla.cs.starai.sdd.manager.SDDManager
-import edu.ucla.cs.starai.logic.VTree
+import edu.ucla.cs.starai.logic._
 
 
 object SDDManagerScratch extends App {
@@ -51,7 +51,8 @@ object SDDManagerScratch extends App {
   println(s"Manager unique nodes cache size = ${mgr.uniqueNodesCacheSize}")
   
   
-  println(s"UNSAT SDD = ${unsat}")
+  println(s"UNSAT SDD = ")
+  println(unsat)
   
 }
 

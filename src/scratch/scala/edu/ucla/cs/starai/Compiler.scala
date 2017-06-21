@@ -13,11 +13,11 @@ object CompilerScratch extends App {
   
 //  val cnf = DimacsIO.parse("examples/s208.1.scan.cnf")
   
-  val cnf = DimacsIO.parse("examples/count.cnf")
-  val vtree = parser.parse(new File("examples/count.cnf.vtree"))
+//  val cnf = DimacsIO.parse("examples/count.cnf")
+//  val vtree = parser.parse(new File("examples/count.cnf.vtree"))
   
-//  val cnf = DimacsIO.parse("examples/count-short.cnf")
-//  val vtree = parser.parse(new File("examples/count-short.cnf.vtree"))
+  val cnf = DimacsIO.parse("examples/count-short.cnf")
+  val vtree = parser.parse(new File("examples/count-short.cnf.vtree"))
   
 //  val cnf = DimacsIO.parse("examples/c8.cnf")
   
