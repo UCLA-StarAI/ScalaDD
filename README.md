@@ -1,5 +1,6 @@
 # ScalaDD
 Experimental implementation of decision diagrams (OBDDs, SDDs, PSDDs) in Scala.
+This code is not ready to be used, for any purpose.
 
-# Setup
-To set up Eclipse environment, run `sbt eclipse`.
+# Development Setup
+To set up an Eclipse environment, run `sbt eclipse`.
