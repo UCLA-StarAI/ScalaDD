@@ -6,7 +6,6 @@ import org.scalatest.FlatSpec
 trait SDDBehaviors { this: FlatSpec =>
 
   def correctSize(sdd: => SDD, size: Int) {
-    println("in test")
     it should s"have size $size" in {
       assert(sdd.sddSize === size)
     }

@@ -15,12 +15,13 @@ class VTreeParser(verbosity: Int = 0) {
   // used for IO
   // TODO clean up, use proper parser
   
-  def parse(file: File): VTree = {
+  def parse(src: Source): VTree = {
+    require(src != null)
     //c ids of vtree nodes start at 0
     //c ids of variables start at 1
     //c vtree nodes appear bottom-up, children before parents
     var l = 0;
-    val lines = Source.fromFile(file).getLines().toArray
+    val lines = src.getLines().toArray
     val (comments, code) = lines.partition { _.startsWith("c") }
     if (verbosity>1) {
       println("Comments:")
@@ -70,6 +71,7 @@ class VTreeParser(verbosity: Int = 0) {
         case _ => require(false, "Cannot parse " + line)
       }
     }
+    src.close
     lastNode
   }
 

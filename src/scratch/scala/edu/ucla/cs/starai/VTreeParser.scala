@@ -3,11 +3,12 @@ package edu.ucla.cs.starai;
 import edu.ucla.cs.starai.logic.VTreeINode
 import edu.ucla.cs.starai.logic.VTreeParser
 import java.io.File
+import scala.io.Source
 
 object VtreeParserScratch extends App {
   
   val parser = new VTreeParser(1)
-  val vtree = parser.parse(new File("examples/big-swap.vtree"))
+  val vtree = parser.parse(Source.fromFile("examples/big-swap.vtree"))
   
   println(s"Size = ${vtree.size}")
   println(s"Vars = ${vtree.variables}")

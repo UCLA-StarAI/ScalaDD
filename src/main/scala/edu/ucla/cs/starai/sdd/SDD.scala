@@ -10,7 +10,7 @@ import edu.ucla.cs.starai.logic.VTree
 import edu.ucla.cs.starai.logic.VTreeINode
 import edu.ucla.cs.starai.logic.VTreeLeaf
 
-trait SDD extends DAG[SDD,SDDLeaf, SDDINode] {
+trait SDD extends DAG[SDD,SDDLeaf,SDDINode] {
   
   def vtree: VTree
     
@@ -37,17 +37,18 @@ trait SDD extends DAG[SDD,SDDLeaf, SDDINode] {
     }
     foldUp[BigInt](input, propagate)
   }
-  
+    
   def name: String
   override def toString = name
   
 }
 
+trait SDDRoot extends SDD
 
-trait SDDLeaf extends SDD with LeafNode[SDD,SDDLeaf,SDDINode]{
+trait SDDLeaf extends SDDRoot with LeafNode[SDD,SDDLeaf,SDDINode]{
   
   def vtree: VTreeLeaf
-  
+  final def variable = vtree.variable
 }
 
 
@@ -77,7 +78,7 @@ trait FalseLeaf extends SDDLeaf {
 
 trait LiteralLeaf extends SDDLeaf {
   
-  assume(vtree.variable == literal.variable, s"Leafs should respect the vtree: ${vtree.variable} == ${literal.variable}")
+  assume(variable == literal.variable, s"Leafs should respect the vtree: ${variable} == ${literal.variable}")
   
   def literal: Literal
   final def isConsistent = true
@@ -103,12 +104,15 @@ trait SDDElemNode extends SDDINode {
   
 
 trait SDDDecNode 
-    extends SDDINode {
+    extends SDDINode with SDDRoot {
 
   assume(elems.forall { _.vtree == elems.head.vtree }, "XY-Partitions should have elements respecting the same vtree: " + elems)
   
   def elems: Seq[SDDElemNode]
   def partitionSize = elems.size
+  
+  def primes = elems.map(_.prime)
+  def subs = elems.map(_.sub)
   
   def children = elems.toSeq
   

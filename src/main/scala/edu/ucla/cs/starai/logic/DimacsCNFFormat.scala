@@ -83,6 +83,7 @@ object DimacsIO {
   def parse(fileName: String): DimacsCNF = parse(Source.fromFile(fileName))
 
   def parse(file: Source): DimacsCNF = {
+    require(file != null)
     val lines = file.getLines.map { line => line match {
         case PLine.Line(numVars, numClauses) => PLine(numVars.toInt, numClauses.toInt)
         case Comment.Line(c) => Comment(c)

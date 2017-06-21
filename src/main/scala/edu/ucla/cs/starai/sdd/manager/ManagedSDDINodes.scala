@@ -9,13 +9,14 @@ import scala.collection.Iterator
 import scala.collection.immutable
 import scala.math.BigInt.int2bigInt
 
-import edu.ucla.cs.starai.logic.Literal
+import edu.ucla.cs.starai.logic._
 import edu.ucla.cs.starai.graph.LeafNode
 import edu.ucla.cs.starai.graph.DAG
 import edu.ucla.cs.starai.graph.INode
 import edu.ucla.cs.starai.sdd._
 import edu.ucla.cs.starai.sdd.SDDDecNode
 import edu.ucla.cs.starai.util.ProxyKey
+
 
 
 
@@ -68,11 +69,16 @@ final class ManagedSDDDecNode(val key: Long, val elems: Seq[ManagedSDDElemNode])
   
   override def children = elems.toSeq
   
-  def isTrimmable = (
-      (partitionSize == 2 && elems(0).sub.isValid && !elems(1).sub.isConsistent && elems(1).prime == !elems(0).prime)
-         || (partitionSize == 2 && elems(1).sub.isValid && !elems(0).sub.isConsistent && elems(0).prime == !elems(1).prime)
-         || (partitionSize == 1 && elems(0).prime.isValid))
+  def isSubTrimmable = 
+    (partitionSize == 2 && (
+          (elems(0).sub.isValid && !elems(1).sub.isConsistent)
+           || (elems(1).sub.isValid && !elems(0).sub.isConsistent)))
+           
+  def isPrimeTrimmable = (partitionSize == 1 && elems(0).prime.isValid)
+   
+  def isTrimmable = isPrimeTrimmable || isSubTrimmable
   
+         
   def isConsistent = (this != manager.False)
   def isValid = (this == manager.True)
 

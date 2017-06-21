@@ -3,13 +3,15 @@ package edu.ucla.cs.starai.sdd.manager
 import edu.ucla.cs.starai.graph.DAG
 import edu.ucla.cs.starai.graph.INode
 import edu.ucla.cs.starai.graph.LeafNode
-import edu.ucla.cs.starai.logic.Literal
+import edu.ucla.cs.starai.logic._
 import edu.ucla.cs.starai.sdd.SDD
 import edu.ucla.cs.starai.sdd.SDDINode
 import edu.ucla.cs.starai.sdd.SDDLeaf
 import edu.ucla.cs.starai.logic.VTreeINode
 import edu.ucla.cs.starai.logic.VTreeLeaf
 import edu.ucla.cs.starai.util.ProxyKey
+
+
 
 
 /**
@@ -55,6 +57,29 @@ trait ManagedSDD
     count
   }
   
+  def unUsedVars = vtree.variables -- usedVars
+  
+  def usedVars: Set[Variable] = {
+    def input(leaf: ManagedSDDLeaf) = leaf match{
+          case _:ManagedLiteralLeaf => Set(leaf.variable)
+          case _ => Set.empty[Variable]
+    }
+    def propagate(inode: ManagedSDDINode, values: Seq[Set[Variable]]) = {
+      val usedVarsBelow = values.reduce(_ union _)
+      inode match{
+          case _:ManagedSDDElemNode => usedVarsBelow
+          case inode:ManagedSDDDecNode => {
+            if(inode.isPrimeTrimmable) usedVarsBelow -- inode.vtree.vl.variables
+            else if(inode.isSubTrimmable) usedVarsBelow -- inode.vtree.vr.variables
+            else usedVarsBelow
+          }
+      }
+    }
+    foldUp[Set[Variable]](input, propagate)
+  }
+  
+  def usedVarsModelCount: BigInt = modelCount >> (unUsedVars.size)
+  
 }
 
 trait ManagedSDDWithKey
@@ -79,7 +104,7 @@ trait ManagedSDDLeaf
   override def vtree: VTreeLeaf = manager.vtree
   
   override def unary_! : ManagedSDDLeaf
-  
+    
 }
 
 

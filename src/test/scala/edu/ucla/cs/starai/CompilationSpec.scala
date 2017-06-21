@@ -37,12 +37,12 @@ class CompilationSpec extends FlatSpec with SDDBehaviors {
   behavior of "A clause"
   val c1 = !x1 ||  x2 || !x5
   it should behave like correctSize(c1,22)
-  it should behave like correctModelCount(c1,(scala.math.pow(2,8)-scala.math.pow(2,8-3)).toInt)
+  it should behave like correctModelCount(c1,(BigInt(2).pow(8)-BigInt(2).pow(8-3)).toInt)
     
   behavior of "Another clause"
   val c2 =  x1 || !x3 ||  x6
   it should behave like correctSize(c2,24)
-  it should behave like correctModelCount(c2,(scala.math.pow(2,8)-scala.math.pow(2,8-3)).toInt)
+  it should behave like correctModelCount(c2,(BigInt(2).pow(8)-BigInt(2).pow(8-3)).toInt)
   
   val c3 = !x2 ||  x4 ||  x7
   val c4 =  x2 ||  x7 || !x8
