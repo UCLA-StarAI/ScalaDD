@@ -14,7 +14,7 @@ class FileCompilationSpec extends FlatSpec with SDDBehaviors {
   
   behavior of "Count-Short CNF"
   val cnf = cnfParser.parse(Source.fromResource("cnfs/count-short.cnf"))
-  val vtree = vtreeParser.parse(Source.fromResource("cnfs/count-short.cnf.vtree"))
+  val vtree = vtreeParser.parse(Source.fromResource("cnfs/count.vtree"))
   
   println(s"Number of variables = ${cnf.numVars}")
   println(s"Number of clauses = ${cnf.numClauses}")
