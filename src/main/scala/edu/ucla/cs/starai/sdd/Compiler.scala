@@ -1,13 +1,12 @@
 package edu.ucla.cs.starai.sdd
 
-import edu.ucla.cs.starai.logic.DimacsCNF
-import edu.ucla.cs.starai.sdd.manager.ManagedSDD
-import edu.ucla.cs.starai.logic.VTree
-import edu.ucla.cs.starai.sdd.manager.SDDManager
 import edu.ucla.cs.starai.logic.Clause
-import edu.ucla.cs.starai.sdd.manager.SDDManagerLeaf
-import edu.ucla.cs.starai.sdd.manager.SDDManagerINode
+import edu.ucla.cs.starai.logic.DimacsCNF
+import edu.ucla.cs.starai.logic.VTree
 import edu.ucla.cs.starai.sdd.manager.ManagedSDDWithKey
+import edu.ucla.cs.starai.sdd.manager.SDDManager
+import edu.ucla.cs.starai.sdd.manager.SDDManagerINode
+import edu.ucla.cs.starai.sdd.manager.SDDManagerLeaf
 
 trait Compiler {
   

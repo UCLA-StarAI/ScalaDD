@@ -1,12 +1,13 @@
 package edu.ucla.cs.starai.sdd.manager
 
-import com.google.common.cache._
+import com.google.common.cache.Cache
+import com.google.common.cache.CacheBuilder
 
-import edu.ucla.cs.starai.util.Conversions._
+import edu.ucla.cs.starai.sdd.ManagedSDDDecNode
 import edu.ucla.cs.starai.util.SymmetricKey
 
 
-trait ApplyFunction extends ((ManagedSDDDecNode,ManagedSDDDecNode) => ManagedSDDDecNode) {
+trait ApplyFunction extends ((ManagedSDDDecNodeImpl,ManagedSDDDecNodeImpl) => ManagedSDDDecNodeImpl) {
   
   def op(x : ManagedSDDWithKey,y: ManagedSDDWithKey): ManagedSDDWithKey
   
@@ -21,27 +22,27 @@ abstract class LRUCachedSymmetricApply(mgr: SDDManagerINode) extends ApplyFuncti
   
    private var numApplies_ = 0;
   
-   final val falseElem = ManagedSDDElemNode(mgr,mgr.ml.False, mgr.mr.False)
+   final val falseElem = ManagedSDDElemNodeImpl(mgr,mgr.ml.False, mgr.mr.False)
   
-   private def computeNew(x: ManagedSDDDecNode, y: ManagedSDDDecNode): ManagedSDDDecNode = {
+   private def computeNew(x: ManagedSDDDecNodeImpl, y: ManagedSDDDecNodeImpl): ManagedSDDDecNodeImpl = {
           val uncompressedElems = for (e1<-x.elems; e2<-y.elems) yield {
             val prime = e1.prime && e2.prime
             if (prime.isConsistent) {
               val sub = op(e1.sub, e2.sub)
               if(prime.isValid && sub.isValid) return mgr.True
-              else ManagedSDDElemNode(mgr,prime,sub)
+              else ManagedSDDElemNodeImpl(mgr,prime,sub)
             }else falseElem
           }
           mgr.uniqueNode(uncompressedElems)
         }
   
-    val cache: Cache[SymmetricKey[Long],ManagedSDDDecNode] = CacheBuilder
+    val cache: Cache[SymmetricKey[Long],ManagedSDDDecNodeImpl] = CacheBuilder
       .newBuilder
       .softValues()
   //    .maximumSize(10000)
       .build()
     
-    def apply(x: ManagedSDDDecNode, y: ManagedSDDDecNode): ManagedSDDDecNode = {
+    def apply(x: ManagedSDDDecNodeImpl, y: ManagedSDDDecNodeImpl): ManagedSDDDecNodeImpl = {
       numApplies_ = numApplies_ + 1
       val key = SymmetricKey.from(x,y)
       val result = cache.get(key, () => {computeNew(x,y)})
@@ -63,9 +64,9 @@ abstract class LRUCachedSymmetricApply(mgr: SDDManagerINode) extends ApplyFuncti
 abstract class LRUCachedSymmetricApplyBrute(mgr: SDDManagerINode) extends LRUCachedSymmetricApply(mgr) {
   
   val numFunctions = BigInt(2).pow(BigInt(2).pow(mgr.vtree.numVariables).toInt).toInt
-  val bruteCache: Array[Array[ManagedSDDDecNode]] = Array.ofDim(numFunctions, numFunctions)
+  val bruteCache: Array[Array[ManagedSDDDecNodeImpl]] = Array.ofDim(numFunctions, numFunctions)
   
-  override def apply(x: ManagedSDDDecNode, y: ManagedSDDDecNode): ManagedSDDDecNode = {
+  override def apply(x: ManagedSDDDecNodeImpl, y: ManagedSDDDecNodeImpl): ManagedSDDDecNodeImpl = {
     assume(x.key.toInt < numFunctions, s"Too many unique nodes: ${mgr.uniqueNode}")
     assume(y.key.toInt < numFunctions, s"Too many unique nodes: ${mgr.uniqueNode}")
     val cachedBrute = bruteCache(x.key.toInt)(y.key.toInt)
@@ -87,9 +88,9 @@ abstract class LRUCachedSymmetricApplyBrute(mgr: SDDManagerINode) extends LRUCac
 abstract class LRUCachedSymmetricApplyPartialBrute(mgr: SDDManagerINode, cacheFirstN: Int) 
   extends LRUCachedSymmetricApply(mgr) {
   
-  val bruteCache: Array[Array[ManagedSDDDecNode]] = Array.ofDim(cacheFirstN, cacheFirstN)
+  val bruteCache: Array[Array[ManagedSDDDecNodeImpl]] = Array.ofDim(cacheFirstN, cacheFirstN)
   
-  override def apply(x: ManagedSDDDecNode, y: ManagedSDDDecNode): ManagedSDDDecNode = {
+  override def apply(x: ManagedSDDDecNodeImpl, y: ManagedSDDDecNodeImpl): ManagedSDDDecNodeImpl = {
     if(x.key < cacheFirstN && y.key < cacheFirstN){
       val cachedBrute = bruteCache(x.key.toInt)(y.key.toInt)
       if(cachedBrute != null) return cachedBrute

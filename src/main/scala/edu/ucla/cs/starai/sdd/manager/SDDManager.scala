@@ -1,27 +1,27 @@
 package edu.ucla.cs.starai.sdd.manager
 
-import scala.collection.GenSet
+import com.google.common.cache.CacheStats
 
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.Cache
-import edu.ucla.cs.starai.util.UniqueCache
-import edu.ucla.cs.starai.util.LRUCache
-import edu.ucla.cs.starai.logic._
-import edu.ucla.cs.starai.sdd.SDDElemNode
-import edu.ucla.cs.starai.sdd.SDDDecNode
 import edu.ucla.cs.starai.graph.Tree
-import edu.ucla.cs.starai.sdd.SDDElemNode
-import edu.ucla.cs.starai.sdd.SDDElemNode
-import edu.ucla.cs.starai.graph.LeafNode
-import edu.ucla.cs.starai.sdd.SDDElemNode
-import edu.ucla.cs.starai.graph.INode
-import edu.ucla.cs.starai.sdd.SDDElemNode
-import edu.ucla.cs.starai.sdd.SDDElemNode
 import edu.ucla.cs.starai.graph.TreeINode
 import edu.ucla.cs.starai.graph.TreeLeaf
-import com.google.common.cache.CacheStats
+import edu.ucla.cs.starai.logic.Literal
+import edu.ucla.cs.starai.logic.VTree
+import edu.ucla.cs.starai.logic.VTreeINode
+import edu.ucla.cs.starai.logic.VTreeLeaf
+import edu.ucla.cs.starai.sdd.ManagedSDD
 import edu.ucla.cs.starai.util.ProxyKey
 
+trait ManagedSDDWithKey
+  extends ManagedSDD 
+  with ProxyKey[Long]{
+    
+  def unary_! : ManagedSDDWithKey
+  def |(l: Literal): ManagedSDDWithKey
+  def &&(other: ManagedSDD): ManagedSDDWithKey
+  def ||(other: ManagedSDD): ManagedSDDWithKey
+  
+}
 
 trait SDDManager extends Tree[SDDManager,SDDManagerLeaf,SDDManagerINode] {
 
@@ -103,40 +103,40 @@ trait SDDManagerINode extends SDDManager with TreeINode[SDDManager,SDDManagerLea
     }
   }
   
-  def lift(node: ManagedSDDWithKey): ManagedSDDDecNode = {
+  def lift(node: ManagedSDDWithKey): ManagedSDDDecNodeImpl = {
     if(node.manager == ml) liftLeft(node)
     else if(node.manager == mr) liftRight(node)
     else throw new IllegalArgumentException
   }
   
-  def liftLeft(node: ManagedSDDWithKey): ManagedSDDDecNode = {
+  def liftLeft(node: ManagedSDDWithKey): ManagedSDDDecNodeImpl = {
     assume(node.manager == ml)
     if (!node.isConsistent) False
     else if (node.isValid) True
-    else uniqueNode(Seq(ManagedSDDElemNode(this,node,mr.True), ManagedSDDElemNode(this,!node, mr.False)))
+    else uniqueNode(Seq(ManagedSDDElemNodeImpl(this,node,mr.True), ManagedSDDElemNodeImpl(this,!node, mr.False)))
   }
 
-  def liftRight(node: ManagedSDDWithKey): ManagedSDDDecNode = {
+  def liftRight(node: ManagedSDDWithKey): ManagedSDDDecNodeImpl = {
     assume(node.manager == mr)
-    uniqueNode(Seq(ManagedSDDElemNode(this,ml.True,node)))
+    uniqueNode(Seq(ManagedSDDElemNodeImpl(this,ml.True,node)))
   }
 
   def uniqueNode: UniqueNodes
   
   //TODO give special toString, make object and register it with the cache 
-  def True = uniqueNode(Seq(ManagedSDDElemNode(this,ml.True, mr.True)))
-  def False = uniqueNode(Seq(ManagedSDDElemNode(this,ml.True, mr.False)))
+  def True = uniqueNode(Seq(ManagedSDDElemNodeImpl(this,ml.True, mr.True)))
+  def False = uniqueNode(Seq(ManagedSDDElemNodeImpl(this,ml.True, mr.False)))
   
   def && : ApplyFunction
   
   def || : ApplyFunction
   
-  def |(a: ManagedSDDDecNode, l: Literal): ManagedSDDDecNode = {
+  def |(a: ManagedSDDDecNodeImpl, l: Literal): ManagedSDDDecNodeImpl = {
     if(ml.variables.contains(l.variable)){
-      uniqueNode(a.elems.map{case ManagedSDDElemNode(self,p,s) => ManagedSDDElemNode(this,(p|l),s)})
+      uniqueNode(a.elems.map{case ManagedSDDElemNodeImpl(self,p,s) => ManagedSDDElemNodeImpl(this,(p|l),s)})
     }else{
       assume(mr.variables.contains(l.variable))
-      uniqueNode(a.elems.map{case ManagedSDDElemNode(self,p,s) => ManagedSDDElemNode(this,p,(s|l))})
+      uniqueNode(a.elems.map{case ManagedSDDElemNodeImpl(self,p,s) => ManagedSDDElemNodeImpl(this,p,(s|l))})
     }
   }
   
@@ -154,8 +154,8 @@ class SDDManagerINodeN(val vtree: VTreeINode, val ml: SDDManager, val mr: SDDMan
   override val True = super.True
   override val False =  super.False
   
-  assume(uniqueNode(Seq(ManagedSDDElemNode(this,ml.True, mr.True))) == True)
-  assume(uniqueNode(Seq(ManagedSDDElemNode(this,ml.True, mr.False))) == False)
+  assume(uniqueNode(Seq(ManagedSDDElemNodeImpl(this,ml.True, mr.True))) == True)
+  assume(uniqueNode(Seq(ManagedSDDElemNodeImpl(this,ml.True, mr.False))) == False)
   
   val && = new LRUCachedSymmetricApply(this) {
     override def op(x : ManagedSDDWithKey,y: ManagedSDDWithKey) = x && y

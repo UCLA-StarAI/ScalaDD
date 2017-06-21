@@ -16,7 +16,6 @@ class VTreeParser(verbosity: Int = 0) {
   // TODO clean up, use proper parser
   
   def parse(src: Source): VTree = {
-    require(src != null)
     //c ids of vtree nodes start at 0
     //c ids of variables start at 1
     //c vtree nodes appear bottom-up, children before parents

@@ -16,7 +16,8 @@ object CompilerScratch extends App {
 //  val vtree = parser.parse(new File("examples/count.cnf.vtree"))
     
   val cnf = DimacsIO.parse(Source.fromResource("cnfs/count-short.cnf"))
-  val vtree = parser.parse(Source.fromResource("cnfs/count-short.cnf.vtree"))
+//  val cnf = DimacsIO.parse(Source.fromResource("cnfs/count-shorter.cnf"))
+  val vtree = parser.parse(Source.fromResource("cnfs/count.vtree"))
   
 //  val cnf = DimacsIO.parse("examples/c8.cnf")"
   
@@ -43,14 +44,15 @@ object CompilerScratch extends App {
   println(s"SDD size = ${sdd.sddSize}")
   println(s"SDD nodes = ${sdd.sddNodes}")
   
-  println(s"Trimmed SDD size = ${sdd.trimmedSddSize}")
-  println(s"Trimmed SDD nodes = ${sdd.trimmedSddNodes}")
+  println(s"Trimmed SDD size = ${sdd.trimmedSize}")
+  println(s"Trimmed SDD number of nodes = ${sdd.trimmedNumNodes}")
+  println(sdd.trim)
   
   println(s"Interpretation count = ${BigInt(2).pow(cnf.numVars)}")
   println(s"SDD model count = ${sdd.modelCount}")
   println(s"SDD used model count = ${sdd.usedVarsModelCount}")
   
   println(s"Manager unique nodes cache size = ${sdd.manager.uniqueNodesCacheSize}")
-  
+    
 }
 

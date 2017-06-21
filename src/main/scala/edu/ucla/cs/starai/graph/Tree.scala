@@ -13,10 +13,9 @@ trait Tree[
   ] extends DAG[N,L,I]  {
   self: N =>  
   
-    // specialize methods in subclasses
+  // specialize methods in subclasses
        
-  override def collectUp[T](
-    select: N => Boolean,
+  override def foldUp[T](
     input: L => T, 
     propagate: (I,Seq[T]) => T): T 
 }
@@ -26,8 +25,7 @@ trait TreeLeaf[+N <: Tree[N,L,I], +L <: TreeLeaf[N,L,I] with N,+I <: TreeINode[N
   extends Tree[N,L,I] with LeafNode[N,L,I]{
   self: L =>
     
-  override def collectUp[T](
-    select: N => Boolean,
+  override def foldUp[T](
     input: L => T, 
     propagate: (I,Seq[T]) => T): T = input(this)
     
@@ -41,11 +39,10 @@ trait TreeINode[+N <: Tree[N,L,I], +L <: TreeLeaf[N,L,I] with N,+I <: TreeINode[
   
   def children: Seq[N]
    
-  override def collectUp[T](
-    select: N => Boolean,
+  override def foldUp[T](
     input: L => T, 
     propagate: (I,Seq[T]) => T): T = {
-      val childValues = children.filter(select).map(_.collectUp(select,input,propagate))
+      val childValues = children.map(_.foldUp(input,propagate))
       propagate(self,childValues)
   } 
   

@@ -9,14 +9,14 @@ import edu.ucla.cs.starai.sdd.SDDINode
 import edu.ucla.cs.starai.sdd.SDDLeaf
 import edu.ucla.cs.starai.sdd.TrueLeaf
 import edu.ucla.cs.starai.logic.VTreeLeaf
-import edu.ucla.cs.starai.sdd.LiteralLeaf
+import edu.ucla.cs.starai.sdd._
 import edu.ucla.cs.starai.sdd.FalseLeaf
 import edu.ucla.cs.starai.sdd.SDDElemNode
 import edu.ucla.cs.starai.sdd.SDDDecNode
 import edu.ucla.cs.starai.sdd.SDDElemNode
 
 
-class ManagedTrueLeaf(val manager: SDDManagerLeaf) extends ManagedSDDLeaf with TrueLeaf {
+class ManagedTrueLeaf(val manager: SDDManagerLeaf) extends ManagedSDDLeaf with TrueLeaf[ManagedSDD]  {
   def unary_! = manager.False
   def &&(other: ManagedSDD) = {
     assume(other.manager == this.manager)
@@ -30,7 +30,7 @@ class ManagedTrueLeaf(val manager: SDDManagerLeaf) extends ManagedSDDLeaf with T
   def key = 1
 }
 
-class ManagedFalseLeaf(val manager: SDDManagerLeaf) extends ManagedSDDLeaf with FalseLeaf {
+class ManagedFalseLeaf(val manager: SDDManagerLeaf) extends ManagedSDDLeaf with FalseLeaf[ManagedSDD]  {
   def unary_! = manager.True
   
   def &&(other: ManagedSDD) = {
@@ -45,7 +45,7 @@ class ManagedFalseLeaf(val manager: SDDManagerLeaf) extends ManagedSDDLeaf with 
   def key = 0
 }
 
-trait ManagedLiteralLeaf extends ManagedSDDLeaf with LiteralLeaf {
+trait ManagedLiteralLeaf extends ManagedSDDLeaf with LiteralLeaf[ManagedSDD]  {
   def |(l: Literal) = if(literal == l) manager.True else manager.False
 }
 
