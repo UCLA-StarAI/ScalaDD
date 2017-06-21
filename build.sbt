@@ -6,6 +6,7 @@ lazy val root = (project in file(".")).
       version      := "0.1.0-SNAPSHOT"
     )),
     name := "ScalaDD",
+    unmanagedSourceDirectories in Compile += baseDirectory.value / "src" / "scratch" / "scala",
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % Test,
     libraryDependencies += "com.google.guava" % "guava" % "12.0",
     EclipseKeys.withSource := true,

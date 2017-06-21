@@ -10,7 +10,7 @@ trait DAG[
   +N <: DAG[N,L,I], 
   +L <: LeafNode[N,L,I] with N, 
   +I <: INode[N,L,I] with N
-  ] extends Iterable[N] with SelfReferential[N] {
+  ] extends Iterable[N] with SelfTraversable[N] {
   self: N =>
       
   // TODO: rewrite to not require a full traversal on first next
@@ -21,7 +21,9 @@ trait DAG[
   
   def foldUp[T](
     input: L => T, 
-    propagate: (I,Seq[T]) => T): T = collectUp(_ => true, input, propagate)
+    propagate: (I,Seq[T]) => T): T = {
+      collectUp(_ => true, input, propagate)
+  }
   
   
   def collectUp[T](

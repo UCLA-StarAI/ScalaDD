@@ -6,7 +6,7 @@ import com.google.common.cache.CacheLoader
 import com.google.common.cache.CacheStats
 
 /**
- * Be careful whe keys can reference values: it breaks the weak or soft GC
+ * Be careful when keys can reference values: it breaks the weak or soft GC
  */
 object UniqueCache {
 

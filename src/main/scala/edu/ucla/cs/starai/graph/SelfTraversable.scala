@@ -7,7 +7,7 @@ import scala.collection.GenTraversableOnce
 /**
  * A Traversable that contains itself
  */
-trait SelfReferential[+A] extends Traversable[A]{
+trait SelfTraversable[+A] extends Traversable[A]{
   
   // cannot use the toString from TraversableLike: it recurses infinitely if this is part of the iterable
   override def toString = s"$stringPrefix@$hashCode"
