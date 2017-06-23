@@ -4,16 +4,16 @@ import scala.collection.immutable
 import scala.collection.mutable
 
 /**
- * A directed acyclic graph with nodes N and leafs L
+ * A directed acyclic graph with nodes N and leafs L.
  */
 trait DAG[
   +N <: DAG[N,L,I],
   +L <: LeafNode[N,L,I] with N,
   +I <: INode[N,L,I] with N
-  ] extends Iterable[N] with SelfTraversable[N] {
+  ] extends Graph[N] with SelfTraversable[N] {
   
   // self type enforces that object's subtype of DAG is also the subtype of DAG passed as N
-  self: N =>
+  // self: N =>
   
   def leafs: Iterator[L] = iterator.collect{case leaf:LeafNode[N,L,I] => 
     leaf.asInstanceOf[L] // Self type of LeafNode[N,L,I] enforces that it is an instance of L.
@@ -35,21 +35,8 @@ trait DAG[
   override def foreach[U](f: N => U): Unit = {
     foldUp(f,(x,_:Any) => f(x))
   }
-  
-  def contains[U>:N](node: U): Boolean = exists { node == _ }
-      
-  def linearize: Seq[N] = {
-    var nodes: List[N] = Nil
-    for(node <- this) nodes = node :: nodes
-    nodes.reverse
-  }
-  
-  // TODO: rewrite to not require a full traversal on first next
-  override def iterator: Iterator[N] = linearize.iterator
-  
-  def numNodes: Int = iterator.length
-  
-  def numEdges: Int = {
+    
+  override def numEdges: Int = {
     var count = 0;
     for(inode <- inodes) count = count + inode.numChildren
     count
