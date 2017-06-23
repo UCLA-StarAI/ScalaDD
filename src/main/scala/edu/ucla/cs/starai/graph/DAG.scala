@@ -4,83 +4,110 @@ import scala.collection.immutable
 import scala.collection.mutable
 
 /**
- * A directed acyclic graph with nodes N, leafs L, and internal nodes I
+ * A directed acyclic graph with nodes N and leafs L
  */
 trait DAG[
-  +N <: DAG[N,L,I], 
-  +L <: LeafNode[N,L,I] with N, 
+  +N <: DAG[N,L,I],
+  +L <: LeafNode[N,L,I] with N,
   +I <: INode[N,L,I] with N
   ] extends Iterable[N] with SelfTraversable[N] {
-  self: N =>
-      
-  // TODO: rewrite to not require a full traversal on first next
-  override def iterator: Iterator[N] = linearize.iterator
   
-  def inodes: Iterator[I] = iterator.collect{case inode:INode[N,L,I] => inode.asSelfINode}
-  def leafs: Iterator[L] = iterator.collect{case leaf:LeafNode[N,L,I] => leaf.asSelfLeaf}
+  // self type enforces that object's subtype of DAG is also the subtype of DAG passed as N
+  self: N =>
+  
+  def leafs: Iterator[L] = iterator.collect{case leaf:LeafNode[N,L,I] => 
+    leaf.asInstanceOf[L] // Self type of LeafNode[N,L,I] enforces that it is an instance of L.
+  }
+  
+  def inodes: Iterator[I] = iterator.collect{case inode:INode[N,L,I] => 
+    inode.asInstanceOf[I] // Self type of INode[N,L,I] enforces that it is an instance of I.
+  }
   
   def foldUp[T](
     input: L => T, 
-    propagate: (I,Seq[T]) => T): T = {
-    val visitedNodes = mutable.HashMap.empty[N, T]
-    def visit(node: N): T = {
-      visitedNodes.getOrElseUpdate(node, 
-        node match {
-          case leaf: LeafNode[N,L,I] => input(leaf.asSelfLeaf)
-          case inode: INode[N,L,I] => {
-            val childValues = inode.children.map(visit)
-            propagate(inode.asSelfINode,childValues)
-          }
-        }
-      )
-    }
-    visit(this)
-  }
+    propagate: (I,Seq[T]) => T): T
     
+  def foldUpCached[T,M>:N](
+    input: L => T, 
+    propagate: (I,Seq[T]) => T,
+    cache: mutable.Map[M, T]): T
+  
   override def foreach[U](f: N => U): Unit = {
-    foldUp(f, (n:N,x:Any) => f(n))
+    foldUp(f,(x,_:Any) => f(x))
   }
   
   def contains[U>:N](node: U): Boolean = exists { node == _ }
       
   def linearize: Seq[N] = {
     var nodes: List[N] = Nil
-    for(node <- self) nodes = node :: nodes
+    for(node <- this) nodes = node :: nodes
     nodes.reverse
   }
   
-  def numNodes: Int = {
-    var count = 0;
-    for(node <- self) count = count + 1
-    count
-  }
+  // TODO: rewrite to not require a full traversal on first next
+  override def iterator: Iterator[N] = linearize.iterator
+  
+  def numNodes: Int = iterator.length
   
   def numEdges: Int = {
     var count = 0;
-    for(node <- self) node match {
-      case _:LeafNode[N,L,I] => {}// no edges
-      case inode:INode[N,L,I] => count = count + inode.numChildren
-    }
+    for(inode <- inodes) count = count + inode.numChildren
     count
   }
   
 }
 
-trait LeafNode[+N <: DAG[N,L,I], +L <: LeafNode[N,L,I] with N,+I <: INode[N,L,I] with N] extends DAG[N,L,I]{
-  self : L =>
+trait LeafNode[
+  +N <: DAG[N,L,I],
+  +L <: LeafNode[N,L,I] with N,
+  +I <: INode[N,L,I] with N
+  ] extends DAG[N,L,I] {
   
-  override def iterator: Iterator[N] = Iterator(this)
+  // self type enforces that object's subtype of LeafNode is also the subtype of LeafNode passed as L
+  self: L =>
+    
+  override def foldUp[T](
+    input: L => T, 
+    propagate: (I,Seq[T]) => T): T  = input(this)
+    
+  override def foldUpCached[T,M>:N](
+    input: L => T, 
+    propagate: (I,Seq[T]) => T,
+    cache: mutable.Map[M, T]): T = {
+    cache.getOrElseUpdate(this, input(this))
+  }
   
-  // not sure why we need this... why doesn't the type system enforce the self type?
-  def asSelfLeaf = this
+  override def foreach[U](f: N => U): Unit = f(this)
+  
+  override def numNodes = 1
+  override def numEdges = 0
+  
+  override def iterator: Iterator[L] = Iterator(this)
   
 }
   
-trait INode[+N <: DAG[N,L,I], +L <: LeafNode[N,L,I] with N,+I <: INode[N,L,I] with N] extends DAG[N,L,I]{
+trait INode[
+  +N <: DAG[N,L,I],
+  +L <: LeafNode[N,L,I] with N,
+  +I <: INode[N,L,I] with N
+  ] extends DAG[N,L,I]{
+    
+  // self type enforces that object's subtype of INode is also the subtype of INode passed as I
   self: I =>
-  
-  // not sure why we need this... why doesn't the type system enforce the self type?
-  def asSelfINode = this
+    
+  override def foldUp[T](
+    input: L => T, 
+    propagate: (I,Seq[T]) => T): T  = {
+    foldUpCached(input,propagate,mutable.Map.empty)
+  }
+    
+  override def foldUpCached[T,M>:N](
+    input: L => T, 
+    propagate: (I,Seq[T]) => T,
+    cache: mutable.Map[M, T]): T = {
+    cache.getOrElseUpdate(this, 
+        propagate(this,children.map(_.foldUpCached(input,propagate,cache))))
+  }
   
   def children: Seq[N]
   

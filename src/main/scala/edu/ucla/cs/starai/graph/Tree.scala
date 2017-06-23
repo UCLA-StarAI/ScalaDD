@@ -11,29 +11,25 @@ trait Tree[
   +L <: TreeLeaf[N,L,I] with N, 
   +I <: TreeINode[N,L,I] with N
   ] extends DAG[N,L,I]  {
+  
   self: N =>  
   
-  // specialize methods in subclasses
+  // opportunity to specialize methods
        
-  override def foldUp[T](
-    input: L => T, 
-    propagate: (I,Seq[T]) => T): T 
 }
 
 
 trait TreeLeaf[+N <: Tree[N,L,I], +L <: TreeLeaf[N,L,I] with N,+I <: TreeINode[N,L,I] with N] 
   extends Tree[N,L,I] with LeafNode[N,L,I]{
+  
   self: L =>
-    
-  override def foldUp[T](
-    input: L => T, 
-    propagate: (I,Seq[T]) => T): T = input(this)
     
 }
   
 
 trait TreeINode[+N <: Tree[N,L,I], +L <: TreeLeaf[N,L,I] with N,+I <: TreeINode[N,L,I] with N] 
   extends Tree[N,L,I] with INode[N,L,I]{
+  
   self: I =>
   
   
@@ -42,8 +38,7 @@ trait TreeINode[+N <: Tree[N,L,I], +L <: TreeLeaf[N,L,I] with N,+I <: TreeINode[
   override def foldUp[T](
     input: L => T, 
     propagate: (I,Seq[T]) => T): T = {
-      val childValues = children.map(_.foldUp(input,propagate))
-      propagate(self,childValues)
+      propagate(self,children.map(_.foldUp(input,propagate)))
   } 
   
   override def iterator: Iterator[N] = children.map(_.iterator).reduce(_ ++ _) ++ Iterator(this)
