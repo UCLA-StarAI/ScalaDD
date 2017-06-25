@@ -1,10 +1,12 @@
-package edu.ucla.cs.starai.logic
-
-import java.io.File
+package edu.ucla.cs.starai.logic.io
 
 import scala.io.Source
-
-import edu.ucla.cs.starai.logic
+import edu.ucla.cs.starai.logic.VTree
+import edu.ucla.cs.starai.logic.VTreeINode
+import edu.ucla.cs.starai.logic.VTreeLeaf
+import edu.ucla.cs.starai.logic.Variable
+import edu.ucla.cs.starai.logic.VTreeLeafImpl
+import edu.ucla.cs.starai.logic.VTreeINodeImpl
 
 
 /**
@@ -15,7 +17,7 @@ class VTreeParser(verbosity: Int = 0) {
   // used for IO
   // TODO clean up, use proper parser
   
-  def parse(src: Source): VTree = {
+  def parse(src: Source): VTree[_] = {
     //c ids of vtree nodes start at 0
     //c ids of variables start at 1
     //c vtree nodes appear bottom-up, children before parents
@@ -36,7 +38,7 @@ class VTreeParser(verbosity: Int = 0) {
     require(vtreeLine.size == 2, "Invalid: " + code.head)
     require(vtreeLine.head == "vtree", "Line should start with 'vtree': " + code.head)
     val nbNodes = vtreeLine(1).toInt
-    val vtreeNodes = Array.ofDim[VTree](nbNodes)
+    val vtreeNodes = Array.ofDim[VTree[_]](nbNodes)
     var lastNode: VTree = null // needed because node index may not be bottom-up
     for (linei <- 0 until nbNodes) {
       if (verbosity>1 ) println("Reading VTree file "+(linei*100/nbNodes)+"%")
@@ -48,7 +50,7 @@ class VTreeParser(verbosity: Int = 0) {
           val intTail = tail.map { _.toInt }
           intTail match {
             case nodeId :: variable :: Nil => {
-              vtreeNodes(nodeId) = new VTreeLeaf(variable)
+              vtreeNodes(nodeId) = new VTreeLeafImpl(variable)
               lastNode = vtreeNodes(nodeId)
             }
             case _ => require(false, "Cannot parse " + line)
@@ -59,7 +61,7 @@ class VTreeParser(verbosity: Int = 0) {
           val intTail = tail.map { _.toInt }
           intTail match {
             case nodeId :: leftId :: rightId :: Nil => {
-              val vtree = new VTreeINode(vtreeNodes(leftId), vtreeNodes(rightId))
+              val vtree = new VTreeINodeImpl(vtreeNodes(leftId), vtreeNodes(rightId))
               vtreeNodes(nodeId) = vtree
               lastNode = vtree
             }

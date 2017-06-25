@@ -1,9 +1,10 @@
 package edu.ucla.cs.starai
 
+import scala.collection.mutable
+
 package object util {
 
-   def assertFalse = assert(false);
-  
+  def assertFalse = assert(false);
    
   implicit class SetOverlaps[T](val x: Set[T]) {
   
@@ -12,5 +13,5 @@ package object util {
     }  
     
   }
-   
+  
 }

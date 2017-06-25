@@ -1,7 +1,7 @@
 package edu.ucla.cs.starai;
 
 import edu.ucla.cs.starai.logic.VTreeINode
-import edu.ucla.cs.starai.logic.VTreeParser
+import edu.ucla.cs.starai.logic.io.VTreeParser
 import java.io.File
 import scala.io.Source
 

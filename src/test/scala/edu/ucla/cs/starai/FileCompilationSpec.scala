@@ -6,6 +6,7 @@ import edu.ucla.cs.starai.logic._
 import edu.ucla.cs.starai.sdd.manager.SDDManager
 import scala.io.Source
 import edu.ucla.cs.starai.sdd.TreeCompiler
+import edu.ucla.cs.starai.logic.io.VTreeParser
 
 class FileCompilationSpec extends FlatSpec with SDDBehaviors {
   

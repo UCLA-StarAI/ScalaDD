@@ -2,7 +2,7 @@ package edu.ucla.cs.starai;
 
 import java.io.File
 import edu.ucla.cs.starai.sdd.TreeCompiler
-import edu.ucla.cs.starai.logic.VTreeParser
+import edu.ucla.cs.starai.logic.io.VTreeParser
 import edu.ucla.cs.starai.logic.DimacsIO
 import scala.io.Source
 

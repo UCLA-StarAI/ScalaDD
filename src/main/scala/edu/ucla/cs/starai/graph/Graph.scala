@@ -2,7 +2,15 @@ package edu.ucla.cs.starai.graph
 
 trait Graph[+N] extends Iterable[N] {
   
-  def contains[U>:N](node: U): Boolean = exists { node == _ }
+  self: N =>
+  
+  def asSelf: N = this
+  
+  /**
+   * Does this graph contain the given subgraph?
+   * Takes any graph in order to covariant in N
+   */
+  def contains(node: Graph[_]): Boolean = exists { node == _ }
   
   def numNodes: Int = iterator.length
   def numEdges: Int
@@ -13,6 +21,6 @@ trait Graph[+N] extends Iterable[N] {
     nodes.reverse
   }
   
-  // TODO: rewrite to not require a full traversal on first next
   override def iterator: Iterator[N] = linearize.iterator
+  
 }

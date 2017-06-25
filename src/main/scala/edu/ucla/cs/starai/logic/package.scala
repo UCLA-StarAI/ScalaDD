@@ -9,7 +9,7 @@ package object logic {
     
     def toLiteral: Literal = under
     def toInt = under
-    
+        
     override def toString = s"X$under"
     
   }
