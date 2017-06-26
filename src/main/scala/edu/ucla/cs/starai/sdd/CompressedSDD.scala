@@ -3,28 +3,12 @@ package edu.ucla.cs.starai.sdd
 import edu.ucla.cs.starai.logic.Circuit
 import edu.ucla.cs.starai.logic.VTreeLeaf
 
-
 trait Compressed extends SDD with Circuit[Compressed]
 
-trait CompressedDecision extends DecisionNode with Compressed {
+trait CompressedDecision[+N <: Compressed] extends DecisionNode[N] with Compressed {
   
-  assume(subs.distinctElements, "Compressed SDDs cannot have repeated subs")
+  self: N =>
     
-  def elems: Seq[CompressedElement]
-  override def children: Seq[CompressedElement] = elems
-}
-
-trait CompressedElement extends ElementNode with Compressed {
-  
-  def prime: Compressed
-  def sub: Compressed
-  
-  override def children: Seq[Compressed] = Seq(prime,sub)
-  
-}
-
-trait CompressedLeaf extends SDDLeaf with Compressed {
-  
-  def vtree: VTreeLeaf[_]
+  assume(subs.distinctElements, "Compressed SDDs cannot have repeated subs")
   
 }

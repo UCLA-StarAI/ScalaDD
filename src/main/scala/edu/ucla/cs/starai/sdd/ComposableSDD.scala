@@ -74,7 +74,7 @@ trait ComposableLiteralNode[N <: ComposableSDD[N]] extends LiteralNode with Comp
     else {
       val lca = (this.vtree lca l.variable)
       val lvtree = lca.nodeFor(l.variable)
-      lca.buildElement(this.vtree.buildLiteral(this.literal),lvtree.buildLiteral(l))
+      lca.buildDecision(this.vtree.buildLiteral(this.literal),lvtree.buildLiteral(l))
     }
     
   def &&(that: SDDN): SDDN = (that assign literal)
@@ -83,76 +83,22 @@ trait ComposableLiteralNode[N <: ComposableSDD[N]] extends LiteralNode with Comp
   
 }
 
-trait ComposableINode[N <: ComposableSDD[N]] extends SDDINode with ComposableSDD[N]{
+trait ComposableDecisionNode[N <: ComposableSDD[N]] extends DecisionNode[N] with ComposableSDD[N]{
   
   self: N =>
     
   override def vtree: BuilderVTree[N] with VTreeINode[_]
-  
-}
-
-
-trait ComposableElementNode[N <: ComposableSDD[N]] extends ElementNode with ComposableINode[N]{
-  
-  self: N =>
     
-  override def children: Seq[SDDN] = Seq(prime,sub)
-      
-  def prime: SDDN
-  def sub: SDDN
-  
-  def unary_!(): SDDN = vtree.buildDecision(Seq(
-      vtree.buildElement(prime, !sub),
-      vtree.buildElement(!prime, vtree.buildTrue)))
-      
-  def |(l: Literal): SDDN = 
-    if(this.vl.contains(l.variable)) vtree.buildElement(prime | l, sub)
-    else if(this.vr.contains(l.variable)) vtree.buildElement(prime, sub | l)
-    else vtree.build(this) // SDD is unaffected by conditioning
-  
-  def assign(l: Literal): SDDN = 
-    if(this.vl.contains(l.variable)) vtree.buildElement(prime assign l, sub)
-    else if(this.vr.contains(l.variable)) vtree.buildElement(prime, sub assign l)
-    else {
-      val lca = (this.vtree lca l.variable)
-      val lvtree = lca.nodeFor(l.variable)
-      lca.buildElement(this,lvtree.buildLiteral(l))
-    }
-  
-  def &&(that: ComposableElementNode[SDDN] with SDDN): ElementNode with SDDN = {
-    if(this.vtree == that.vtree) vtree.buildElement(this.prime && that.prime, this.sub && that.sub)
-    else if (this.vtree.vl contains that.vtree) this.vtree.buildElement(this.prime && that, this.sub)
-    else if (this.vtree.vr contains that.vtree) this.vtree.buildElement(this.prime, this.sub && that)
-    else if (that.vtree.vl contains this.vtree) that.vtree.buildElement(that.prime && this, that.sub)
-    else if (that.vtree.vr contains this.vtree) that.vtree.buildElement(that.prime, that.sub && this)
-    else (this.vtree lca that.vtree).buildElement(this, that)
-  }
-  
-  def &&(that: ComposableDecisionNode[SDDN] with SDDN): DecisionNode with SDDN = {
-    val lca = (this.vtree lca that.vtree)
-    val posElems:Seq[ElementNode with SDDN] = that.elems.map(_ && this)
-    val extraNegElems = that.elems
-  }
-  
+  def elems: Seq[ComposableElementNode[SDDN] with SDDN]
+  override def children: Seq[ComposableElementNode[SDDN] with SDDN] = elems
+   
   def &&(that: SDDN): SDDN = that match{
     case leaf: ComposableLeafNode[N] with SDDN @unchecked => leaf && this
-    case elem: ComposableElementNode[N] with SDDN @unchecked => this && elem
     case dec: ComposableDecisionNode[N] with SDDN @unchecked => this && dec
     case _ => throw new IllegalArgumentException(s"$that is outside of the intended ComposableSDD hierarchy")
   }
   
+  def &&(that: ComposableDecisionNode[N] with SDDN): SDDN
   
-  
-}
-  
-  
-trait ComposableDecisionNode[N <: ComposableSDD[N]] extends DecisionNode with ComposableINode[N]{
-  
-  self: N =>
-    
-  def elems: Seq[ElementNode with SDDN]
-  override def children: Seq[ElementNode with SDDN] = elems
-    
-  def &&(that: ComposableElementNode[SDDN] with SDDN): DecisionNode with SDDN 
 }
 

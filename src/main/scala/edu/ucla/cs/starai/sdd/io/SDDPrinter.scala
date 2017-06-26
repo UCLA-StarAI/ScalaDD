@@ -1,15 +1,6 @@
 package edu.ucla.cs.starai.sdd.io
 
 import java.io.PrintStream
-import scala.collection.Seq
-import edu.ucla.cs.starai.sdd.FalseNode
-import edu.ucla.cs.starai.sdd.LiteralNode
-import edu.ucla.cs.starai.sdd.SDD
-import edu.ucla.cs.starai.sdd.DecisionNode
-import edu.ucla.cs.starai.sdd.ElementNode
-import edu.ucla.cs.starai.sdd.SDDINode
-import edu.ucla.cs.starai.sdd.SDDLeaf
-import edu.ucla.cs.starai.sdd.TrueNode
 
 final class SDDPrinter(output: PrintStream, verbose: Boolean = false) {
 

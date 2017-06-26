@@ -13,12 +13,7 @@ trait SDDBuilder[N <: SDD]{
   /**
    * Disjoint mutually exclusive elements
    */
-  def buildDecision(elems: Seq[ElementNode with N]): DecisionNode with N
-  
-  /**
-   * Conjoin elements in left and right subvtree (order of x and y is irrelevant)
-   */
-  def buildElement(x: N, y: N): ElementNode with N
+  def buildDecision(primes: Seq[N],subs: Seq[N]): DecisionNode[N] with N
   
   /**
    * Requires that l.variale is in vtree

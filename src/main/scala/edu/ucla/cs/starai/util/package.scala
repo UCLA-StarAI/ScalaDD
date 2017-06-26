@@ -18,6 +18,11 @@ package object util {
   
     def distinctElements: Boolean =  x.toSet.size == x.size
     
+    def interleave(y: Seq[T]): Seq[T] = {
+      x.zip(y) flatMap { case (a, b) => Seq(a, b) }
+    }
+
+    
   }
   
 }

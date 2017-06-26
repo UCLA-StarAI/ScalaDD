@@ -17,8 +17,8 @@ trait SDD extends Circuit[SDD] with Tractable {
   def variables: Set[Variable] = vtree.variables
   def numVariables = vtree.numVariables
     
-  def decisions = collect{case decNode:DecisionNode => decNode}
-  def elements = collect{case elemNode:ElementNode => elemNode}
+  def decisions = collect{case dec:DecisionNode[_] => dec}
+  def terminals = collect{case leaf:SDDLeaf => leaf}
   
   def numElements: Long = decisions.map(_.partitionSize).sum
   def sddSize = numElements
