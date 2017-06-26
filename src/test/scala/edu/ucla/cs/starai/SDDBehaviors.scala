@@ -5,13 +5,13 @@ import org.scalatest.FlatSpec
 
 trait SDDBehaviors { this: FlatSpec =>
 
-  def correctSize(sdd: => SDD[_], size: Int) {
+  def correctSize(sdd: => SDD, size: Int) {
     it should s"have size $size" in {
       assert(sdd.sddSize === size)
     }
   }
   
-  def correctModelCount(sdd: => SDD[_], modelCount: Int) {
+  def correctModelCount(sdd: => SDD, modelCount: Int) {
     it should s"have model count $modelCount" in {
       assert(sdd.modelCount === modelCount)
     }

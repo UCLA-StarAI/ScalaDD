@@ -7,8 +7,6 @@ import edu.ucla.cs.starai.graph.DoubleLinkedTree
 trait VTree[+N <: VTree[N]] extends DoubleLinkedTree[N] {
   
   self: N =>
-
-  protected[logic] def setParent(p: VTreeINode[N])
     
   def contains(v: Variable): Boolean = variables.contains(v)
   def variables: Set[Variable]
@@ -31,11 +29,14 @@ object VTree{
   /**
    * Generate balanced vtree for variables X{offset+1} to X{offset+numVars} inclusive
    */
-  def balanced(numVars: Int, offset: Int=0): VTree[_] = {
+  
+  def balanced(numVars: Int, offset: Int=0): VTree[_] = balancedImpl(numVars,offset)
+  
+  private def balancedImpl(numVars: Int, offset: Int): VTreeImpl = {
     assume(numVars > 0)
     assume(offset >=0)
     if(numVars == 1) return new VTreeLeafImpl(offset+1)
-    else return new VTreeINodeImpl(balanced(numVars/2,offset),balanced(numVars-numVars/2,offset+numVars/2))
+    else return new VTreeINodeImpl(balancedImpl(numVars/2,offset),balancedImpl(numVars-numVars/2,offset+numVars/2))
   }
   
 }
@@ -48,7 +49,7 @@ trait VTreeLeaf[+N <: VTree[N]] extends VTree[N] {
   
   def variable: Variable
   
-  def contains(v: Variable) = (v == variable)
+  override def contains(v: Variable) = (v == variable)
   def variables: Set[Variable] = Set(variable)
   override def numVariables = 1
   
@@ -59,12 +60,9 @@ trait VTreeINode[+N <: VTree[N]] extends VTree[N] {
   self: N =>
 
   assume(!(vl.variables overlaps vr.variables), "Variables in left and right branch should be disjoint.")
-  
-  vl.setParent(this)
-  
-  def vl: N 
-  
-  def vr: N
+    
+  def vl: VTree[N] with N 
+  def vr: VTree[N] with N
   
   def variables = vl.variables union vr.variables
   
@@ -72,20 +70,22 @@ trait VTreeINode[+N <: VTree[N]] extends VTree[N] {
   
 }
 
+//************************
 // vtree implementations
+//************************
 
 abstract class VTreeImpl extends VTree[VTreeImpl]{
   
-  private var _parent: Option[VTreeINode[_]] = None
-  protected[logic] def setParent(p: VTreeINode[_]) { 
+  private var _parent: Option[VTreeINodeImpl] = None
+  protected[logic] def setParent(p: VTreeINodeImpl){
     require(p != null)
     require(_parent.isEmpty, s"DoubleLinkedTree $this cannot have multiple parents ($parent and $p)")
     _parent = Some(p)
   }
   
-  def parent: Option[VTree[_]] = _parent
+  def parent: Option[VTreeINodeImpl] = _parent
   
-  val root = super.root
+  override val root = super.root
   
 }
 
@@ -95,8 +95,11 @@ class VTreeLeafImpl(val variable: Variable) extends VTreeImpl with VTreeLeaf[VTr
   
 }
 
-class VTreeINodeImpl(val vl: VTree[_], val vr: VTree[_]) extends VTreeImpl with VTreeINode[VTreeImpl] {
+class VTreeINodeImpl(val vl: VTreeImpl, val vr: VTreeImpl) extends VTreeImpl with VTreeINode[VTreeImpl] {
 
+  vl.setParent(this)
+  vr.setParent(this)
+  
   override val variables = super.variables
   override val children = super.children
   

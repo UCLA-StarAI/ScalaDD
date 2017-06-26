@@ -1,11 +1,7 @@
 package edu.ucla.cs.starai.graph
 
 trait Graph[+N] extends Iterable[N] {
-  
-  self: N =>
-  
-  def asSelf: N = this
-  
+      
   /**
    * Does this graph contain the given subgraph?
    * Takes any graph in order to covariant in N

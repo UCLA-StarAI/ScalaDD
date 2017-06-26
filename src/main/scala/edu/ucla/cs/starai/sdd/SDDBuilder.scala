@@ -1,29 +1,32 @@
 package edu.ucla.cs.starai.sdd
 
 import edu.ucla.cs.starai.logic._
+import edu.ucla.cs.starai.graph.DoubleLinkedTree
 
 /**
  * A builder of SDDs (encapsulating the right vtree to use).
  */
-trait SDDBuilder{
-  
-  def build(sdd: ComposableSDD): ComposableSDD
+trait SDDBuilder[N <: SDD]{
+    
+  def build(sdd: N): N
   
   /**
    * Disjoint mutually exclusive elements
    */
-  def buildDecision(elems: Seq[ComposableElementNode]): ComposableDecisionNode
+  def buildDecision(elems: Seq[ElementNode with N]): DecisionNode with N
   
   /**
    * Conjoin elements in left and right subvtree (order of x and y is irrelevant)
    */
-  def buildElement(x: ComposableSDD, y: ComposableSDD): ComposableElementNode
+  def buildElement(x: N, y: N): ElementNode with N
   
   /**
    * Requires that l.variale is in vtree
    */
-  def buildLiteral(l: Literal): ComposableLiteralNode
-  def buildFalse(): ComposableFalseNode
-  def buildTrue(): ComposableTrueNode
+  def buildLiteral(l: Literal): LiteralNode with N
+  def buildFalse(): FalseNode with N
+  def buildTrue(): TrueNode with N
   
 }
+
+trait BuilderVTree[N <: SDD] extends DoubleLinkedTree[BuilderVTree[N]] with VTree[BuilderVTree[N]] with SDDBuilder[N]

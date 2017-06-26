@@ -7,6 +7,7 @@ import edu.ucla.cs.starai.logic.VTreeLeaf
 import edu.ucla.cs.starai.logic.Variable
 import edu.ucla.cs.starai.logic.VTreeLeafImpl
 import edu.ucla.cs.starai.logic.VTreeINodeImpl
+import edu.ucla.cs.starai.logic.VTreeImpl
 
 
 /**
@@ -38,8 +39,8 @@ class VTreeParser(verbosity: Int = 0) {
     require(vtreeLine.size == 2, "Invalid: " + code.head)
     require(vtreeLine.head == "vtree", "Line should start with 'vtree': " + code.head)
     val nbNodes = vtreeLine(1).toInt
-    val vtreeNodes = Array.ofDim[VTree[_]](nbNodes)
-    var lastNode: VTree = null // needed because node index may not be bottom-up
+    val vtreeNodes = Array.ofDim[VTreeImpl](nbNodes)
+    var lastNode: VTree[_] = null // needed because node index may not be bottom-up
     for (linei <- 0 until nbNodes) {
       if (verbosity>1 ) println("Reading VTree file "+(linei*100/nbNodes)+"%")
       val line = code(1 + linei).split(" ").toList

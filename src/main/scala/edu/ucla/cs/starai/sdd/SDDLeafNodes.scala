@@ -5,6 +5,7 @@ import scala.math.BigInt.int2bigInt
 import edu.ucla.cs.starai.logic
 import edu.ucla.cs.starai.logic.Variable
 import edu.ucla.cs.starai.util.BigRational
+import edu.ucla.cs.starai.logic.VTree
 
 trait SDDLeaf extends SDD{
     

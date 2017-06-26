@@ -13,6 +13,8 @@ trait DAG[+N <: DAG[N]] extends Graph[N] with SelfTraversable[N] with Caching[DA
   
    //self type enforces that object's subtype of DAG is also the subtype of DAG passed as N
    self: N =>
+     
+  def asSelf: DAG[N] with N = this
     
   def foldUp[T](
     propagate: (N,Seq[T]) => T): T  = {

@@ -4,31 +4,28 @@ import edu.ucla.cs.starai.logic.Circuit
 import edu.ucla.cs.starai.logic.VTreeLeaf
 
 
-trait NormalizedSDD extends SDD with Circuit[NormalizedSDD]
+trait Normalized extends SDD with Circuit[Normalized]
 
-
-trait NormalizedDecision extends DecisionNode with NormalizedSDD {
+trait NormalizedDecision extends DecisionNode with Normalized {
   
-  assume(primes.forall{_.subRespects(vtree.vl)},"no vtree nodes are skipped")
-  assume(subs.forall{_.subRespects(vtree.vr)},"no vtree nodes are skipped")
+  assume(primes.forall{_.subRespects(vtree.vl)}, "no vtree nodes are skipped")
+  assume(subs.forall{_.subRespects(vtree.vr)}, "no vtree nodes are skipped")
     
   def elems: Seq[NormalizedElement]
   override def children: Seq[NormalizedElement] = elems
 }
 
-trait NormalizedElement extends ElementNode with NormalizedSDD {
+trait NormalizedElement extends ElementNode with Normalized {
   
-  def prime: NormalizedSDD
-  def sub: NormalizedSDD
+  def prime: Normalized
+  def sub: Normalized
   
-  override def children: Seq[NormalizedSDD] = Seq(prime,sub)
+  override def children: Seq[Normalized] = Seq(prime,sub)
   
 }
 
-trait NormalizedLeaf extends SDDLeaf with NormalizedSDD {
+trait NormalizedLeaf extends SDDLeaf with Normalized {
   
   def vtree: VTreeLeaf[_]
   
 }
-
-

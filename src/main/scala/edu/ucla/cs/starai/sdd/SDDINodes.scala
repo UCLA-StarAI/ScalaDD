@@ -9,7 +9,8 @@ import edu.ucla.cs.starai.logic.VTree
 
 trait SDDINode extends SDD{
   
-  def vtree: VTreeINode[VTree[_]]
+  override def vtree: VTreeINode[_]
+  
   def name = s"N$hashCode"
   
 }
@@ -21,6 +22,9 @@ trait ElementNode extends SDDINode {
   
   def prime: SDD
   def sub: SDD
+
+  def vl = vtree.vl
+  def vr = vtree.vr
   
   def children = Seq(prime,sub)
   
@@ -36,8 +40,7 @@ trait ElementNode extends SDDINode {
 }
   
 
-trait DecisionNode
-    extends SDDINode {
+trait DecisionNode extends SDDINode {
   
   assume(elems.forall { _.vtree == elems.head.vtree }, "XY-Partitions should have elements respecting the same vtree: " + elems)
   assume(primes.forall{_.subRespects(vtree.vl)},"decompositions follow the vtree")

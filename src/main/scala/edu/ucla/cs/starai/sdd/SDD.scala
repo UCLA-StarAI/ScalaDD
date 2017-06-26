@@ -3,20 +3,18 @@ package edu.ucla.cs.starai.sdd
 import scala.math.BigInt.int2bigInt
 import scala.collection.mutable
 
-import edu.ucla.cs.starai.logic.Circuit
-import edu.ucla.cs.starai.logic
 import edu.ucla.cs.starai.logic._
 import edu.ucla.cs.starai.util._
 
 
-trait SDD extends TractableCircuit[SDD]{
-  
-  def vtree: VTree[VTree[_]]
+trait SDD extends Circuit[SDD] with Tractable {
+    
+  def vtree: VTree[_]
     
   def respects(vtree: VTree[_]) = (vtree == this.vtree)
   def subRespects(vtree: VTree[_]) = (vtree.contains(this.vtree))
   
-  def variables = vtree.variables
+  def variables: Set[Variable] = vtree.variables
   def numVariables = vtree.numVariables
     
   def decisions = collect{case decNode:DecisionNode => decNode}

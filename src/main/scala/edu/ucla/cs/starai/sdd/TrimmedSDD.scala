@@ -1,35 +1,25 @@
 package edu.ucla.cs.starai.sdd
 
 import edu.ucla.cs.starai.logic.Circuit
+import edu.ucla.cs.starai.logic.VTree
 
 
-trait TrimmedSDD extends SDD with Circuit[TrimmedSDD] {
-  
-}
+trait Trimmed extends SDD with Circuit[Trimmed]
 
-trait TrimmedDecisionNode extends DecisionNode with TrimmedSDD {
-  
-  
-  def elems: Seq[ElementNode with TrimmedSDD]
-  override def children: Seq[ElementNode with TrimmedSDD] = elems
-  
-}
-
-trait TrimmedDecision extends DecisionNode with TrimmedSDD {
-  
+trait TrimmedDecision extends DecisionNode with Trimmed {
+      
   assume(!isTrimmable,"Trimmed SDDs cannot have trimmable nodes")
   
-  def elems: Seq[TrimmedElement]
-  override def children: Seq[TrimmedElement] = elems
-}
-
-trait TrimmedElement extends ElementNode with TrimmedSDD {
-  
-  def prime: TrimmedSDD
-  def sub: TrimmedSDD
-  
-  override def children: Seq[TrimmedSDD] = Seq(prime,sub)
+  def elems: Seq[ElementNode with TrimmedElement]
+  override def children: Seq[ElementNode with TrimmedElement] = this.elems
   
 }
 
-
+trait TrimmedElement extends ElementNode with Trimmed {
+      
+  def prime: SDD with Trimmed
+  def sub: SDD with Trimmed
+  
+  override def children: Seq[SDD with Trimmed] = Seq(prime,sub)
+  
+}
