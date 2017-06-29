@@ -11,9 +11,14 @@ trait SDDBuilder[N <: SDD]{
   def build(sdd: N): N
   
   /**
-   * Disjoint mutually exclusive elements
+   * Mutually exclusive and exhaustive primes with their subs
    */
-  def buildDecision(primes: Seq[N],subs: Seq[N]): DecisionNode[N] with N
+  def buildPartition(primes: Seq[N],subs: Seq[N]): DecisionNode[N] with N
+  
+  /**
+   * Decomposable conjunction. Arguments are in any order.
+   */
+  def buildDecomposition(x: N, y: N): DecisionNode[N] with N
   
   /**
    * Requires that l.variable is in vtree

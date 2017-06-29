@@ -71,16 +71,10 @@ trait ComposableLiteralNode[N <: ComposableSDD[N]] extends LiteralNode with Comp
     if(this.literal == l) vtree.buildLiteral(this.literal)
     else if(this.literal == !l) vtree.buildFalse
     else {
-      val c1 = this.vtree.buildLiteral(this.literal)
-      val lvtree = lca.nodeFor(l.variable)
-      val c2 = lvtree.buildLiteral(l)
-      type VI = BuilderVTree[N] with VTreeINode[BuilderVTree[N]]
-      val lca = (this.vtree lca l.variable).asInstanceOf[VI]
-      if(lca.vl.contains(this.variable)) {
-        lca.buildDecision(Seq(c1,!c1),Seq(c2,lca.vr.buildFalse()))
-      }else{
-        lca.buildDecision(Seq(c2,!c2),Seq(c1,lca.vr.buildFalse()))
-      }
+      val lca = (this.vtree lca l.variable)
+      val x = this.vtree.buildLiteral(this.literal)
+      val y = lca.nodeFor(l.variable).buildLiteral(l)
+      lca.buildDecomposition(x,y)
     }
     
   def &&(that: SDDN): SDDN = (that assign literal)
@@ -89,22 +83,68 @@ trait ComposableLiteralNode[N <: ComposableSDD[N]] extends LiteralNode with Comp
   
 }
 
-trait ComposableDecisionNode[N <: ComposableSDD[N]] extends DecisionNode[N] with ComposableSDD[N]{
+trait ComposableDecisionNode[N <: ComposableSDD[N]] 
+  extends DecisionNode[N] with ComposableSDD[N]{
   
   self: N =>
     
-  override def vtree: BuilderVTree[N] with VTreeINode[_]
+  override def vtree: BuilderVTree[N] with VTreeINode[BuilderVTree[N]]
     
-  def elems: Seq[ComposableElementNode[SDDN] with SDDN]
-  override def children: Seq[ComposableElementNode[SDDN] with SDDN] = elems
-   
+  def falseSub = vtree.vr.buildFalse
+  def trueSub = vtree.vr.buildTrue
+
+  def unary_!(): SDDN = vtree.buildPartition(primes, subs.map(!_))
+
+  def |(l: Literal): SDDN = 
+    if(vtree.vl contains l.variable) {
+      vtree.buildPartition(primes.map(_|l), subs)
+    }else if(vtree.vr contains l.variable) {
+      vtree.buildPartition(primes, subs.map(_|l))
+    } else (vtree lca l.variable).build(this)
+  
+  def assign(l: Literal): SDDN = 
+    if(vtree.vl contains l.variable) {
+      val lNode = vtree.vl.buildLiteral(l)
+      vtree.buildPartition(!lNode +: primes.map(_ assign l), falseSub +: subs)
+    }else if(vtree.vr contains l.variable) {
+      vtree.buildPartition(primes, subs.map(_ assign l))
+    } else {
+      val lca = (this.vtree lca l.variable)
+      val y = lca.nodeFor(l.variable).buildLiteral(l)
+      lca.buildDecomposition(this,y)
+    }
+
   def &&(that: SDDN): SDDN = that match{
     case leaf: ComposableLeafNode[N] with SDDN @unchecked => leaf && this
     case dec: ComposableDecisionNode[N] with SDDN @unchecked => this && dec
-    case _ => throw new IllegalArgumentException(s"$that is outside of the intended ComposableSDD hierarchy")
+    case _ => throw new IllegalArgumentException(
+        s"$that is outside of the intended ComposableSDD hierarchy")
   }
   
-  def &&(that: ComposableDecisionNode[N] with SDDN): SDDN
+  def &&(that: ComposableDecisionNode[N] with SDDN): SDDN = {
+    if(this.vtree == that.vtree){
+       val newPrimes = for(x <- this.primes; y <- that.primes) yield (x && y)
+       val newSubs = for(x <- this.subs; y <- that.subs) yield (x && y)
+       vtree.buildPartition(newPrimes, newSubs)
+    }
+    else if(this.vtree contains that.vtree) this.conjoinBelow(that)
+    else if(that.vtree contains this.vtree) that.conjoinBelow(this)
+    else (this.vtree lca that.vtree).buildDecomposition(this,that)
+  }
+
+  /**
+   * Conjoin with an argument that respects a vtree node strictly below this node's vtree
+   */
+  protected def conjoinBelow(that: ComposableDecisionNode[N] with SDDN): SDDN = {
+    assume(this.vtree contains that.vtree)
+    if(this.vtree.vl contains that.vtree){
+       this.vtree.buildPartition(!that +: this.primes.map(_ && that), this.falseSub +: this.subs)
+    }else{
+       this.vtree.buildPartition(this.primes, this.subs.map(_ && that))
+    }
+  }
+  
+  def ||(that: SDDN): SDDN = !(!this && !that)
   
 }
 
