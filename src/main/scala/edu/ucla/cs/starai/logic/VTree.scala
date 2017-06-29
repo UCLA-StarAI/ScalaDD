@@ -3,6 +3,7 @@ package edu.ucla.cs.starai.logic
 import edu.ucla.cs.starai.util._
 import edu.ucla.cs.starai.graph.Tree
 import edu.ucla.cs.starai.graph.DoubleLinkedTree
+import edu.ucla.cs.starai.sdd.SDD
 
 trait VTree[+N <: VTree[N]] extends DoubleLinkedTree[N] {
   

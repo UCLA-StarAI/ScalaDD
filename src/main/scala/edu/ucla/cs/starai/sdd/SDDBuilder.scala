@@ -16,7 +16,7 @@ trait SDDBuilder[N <: SDD]{
   def buildDecision(primes: Seq[N],subs: Seq[N]): DecisionNode[N] with N
   
   /**
-   * Requires that l.variale is in vtree
+   * Requires that l.variable is in vtree
    */
   def buildLiteral(l: Literal): LiteralNode with N
   def buildFalse(): FalseNode with N
@@ -24,4 +24,10 @@ trait SDDBuilder[N <: SDD]{
   
 }
 
-trait BuilderVTree[N <: SDD] extends DoubleLinkedTree[BuilderVTree[N]] with VTree[BuilderVTree[N]] with SDDBuilder[N]
+trait BuilderVTree[N <: SDD] extends DoubleLinkedTree[BuilderVTree[N]] 
+  with VTree[BuilderVTree[N]] 
+  with SDDBuilder[N] {
+  
+  
+  
+}

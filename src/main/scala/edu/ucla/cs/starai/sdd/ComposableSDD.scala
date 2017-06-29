@@ -19,7 +19,6 @@ trait ComposableSDD[N <: ComposableSDD[N]] extends SDD with ComposableCircuit[N]
   def |(l: Literal): SDDN
   def assign(l: Literal): SDDN
   
-  // Any output will always respect the LCA of the operand vtrees
   def &&(other: SDDN): SDDN
   def ||(other: SDDN): SDDN
   
@@ -72,9 +71,16 @@ trait ComposableLiteralNode[N <: ComposableSDD[N]] extends LiteralNode with Comp
     if(this.literal == l) vtree.buildLiteral(this.literal)
     else if(this.literal == !l) vtree.buildFalse
     else {
-      val lca = (this.vtree lca l.variable)
+      val c1 = this.vtree.buildLiteral(this.literal)
       val lvtree = lca.nodeFor(l.variable)
-      lca.buildDecision(this.vtree.buildLiteral(this.literal),lvtree.buildLiteral(l))
+      val c2 = lvtree.buildLiteral(l)
+      type VI = BuilderVTree[N] with VTreeINode[BuilderVTree[N]]
+      val lca = (this.vtree lca l.variable).asInstanceOf[VI]
+      if(lca.vl.contains(this.variable)) {
+        lca.buildDecision(Seq(c1,!c1),Seq(c2,lca.vr.buildFalse()))
+      }else{
+        lca.buildDecision(Seq(c2,!c2),Seq(c1,lca.vr.buildFalse()))
+      }
     }
     
   def &&(that: SDDN): SDDN = (that assign literal)
