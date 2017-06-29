@@ -22,10 +22,15 @@ trait ComposableSDD[N <: ComposableSDD[N]] extends SDD with ComposableCircuit[N]
   def &&(other: SDDN): SDDN
   def ||(other: SDDN): SDDN
   
+  def kind: Either[ComposableLeafNode[N] with N,ComposableDecisionNode[N] with N]
+  
 }
 
 trait ComposableLeafNode[N <: ComposableSDD[N]] extends SDDLeaf with ComposableSDD[N] {
   self: N =>
+    
+  override def kind = Left(this)
+
 }
 
 trait ComposableTrueNode[N <: ComposableSDD[N]] extends TrueNode with ComposableLeafNode[N] {
@@ -90,6 +95,8 @@ trait ComposableDecisionNode[N <: ComposableSDD[N]]
     
   override def vtree: BuilderVTree[N] with VTreeINode[BuilderVTree[N]]
     
+  override def kind = Right(this)
+  
   def falseSub = vtree.vr.buildFalse
   def trueSub = vtree.vr.buildTrue
 
@@ -114,11 +121,9 @@ trait ComposableDecisionNode[N <: ComposableSDD[N]]
       lca.buildDecomposition(this,y)
     }
 
-  def &&(that: SDDN): SDDN = that match{
-    case leaf: ComposableLeafNode[N] with SDDN @unchecked => leaf && this
-    case dec: ComposableDecisionNode[N] with SDDN @unchecked => this && dec
-    case _ => throw new IllegalArgumentException(
-        s"$that is outside of the intended ComposableSDD hierarchy")
+  def &&(that: SDDN): SDDN = that.kind match{
+    case Left(leaf) => leaf && this
+    case Right(dec) => this && dec
   }
   
   def &&(that: ComposableDecisionNode[N] with SDDN): SDDN = {

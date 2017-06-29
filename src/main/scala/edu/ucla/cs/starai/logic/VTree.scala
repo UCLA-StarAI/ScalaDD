@@ -8,6 +8,8 @@ import edu.ucla.cs.starai.sdd.SDD
 trait VTree[+N <: VTree[N]] extends DoubleLinkedTree[N] {
   
   self: N =>
+ 
+  def kind: Either[VTreeLeaf[N],VTreeINode[N]]
     
   def contains(v: Variable): Boolean = variables.contains(v)
   def variables: Set[Variable]
@@ -50,6 +52,8 @@ trait VTreeLeaf[+N <: VTree[N]] extends VTree[N] {
   
   def variable: Variable
   
+  def kind = Left(this)
+  
   override def contains(v: Variable) = (v == variable)
   def variables: Set[Variable] = Set(variable)
   override def numVariables = 1
@@ -64,6 +68,8 @@ trait VTreeINode[+N <: VTree[N]] extends VTree[N] {
     
   def vl: VTree[N] with N 
   def vr: VTree[N] with N
+  
+  def kind = Right(this)
   
   def variables = vl.variables union vr.variables
   
