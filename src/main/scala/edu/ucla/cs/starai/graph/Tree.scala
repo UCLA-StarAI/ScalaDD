@@ -31,6 +31,7 @@ trait DoubleLinkedTree[+N <: DoubleLinkedTree[N]] extends Tree[N] {
     
     def root = ancestors.last
     
+    // prefer exception over option return type here
     def lca[U >: N <: DoubleLinkedTree[U]](that: U): U = {
       if(this == that) this
       else if(this.contains(that)) this
@@ -47,6 +48,7 @@ trait DoubleLinkedTree[+N <: DoubleLinkedTree[N]] extends Tree[N] {
     /**
      * Returns first ancestor (including this) that satisfies a predicate
      */
+    // prefer exception over option return type here
     def ancestor(pred: (N => Boolean)): N = {
       if(pred(this)) this
       else if(parent.nonEmpty) parent.get.ancestor(pred)

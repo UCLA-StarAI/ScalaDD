@@ -19,7 +19,7 @@ trait SDD extends Circuit[SDD] with Tractable {
   def numVariables = vtree.numVariables
     
   def decisions = collect{case dec:DecisionNode[_] => dec}
-  def terminals = collect{case leaf:SDDLeaf => leaf}
+  def terminals = collect{case leaf:TerminalNode => leaf}
   
   def numElements: Long = decisions.map(_.partitionSize).sum
   def sddSize = numElements
@@ -39,7 +39,7 @@ trait SDD extends Circuit[SDD] with Tractable {
   
   def usedVarsModelCount: BigInt = modelCount >> (unUsedVars.size)
     
-  def kind: Either[SDDLeaf,DecisionNode[_]]
+  def kind: Either[TerminalNode,DecisionNode[_]]
   
   def name: String
   override def toString = name
@@ -50,8 +50,10 @@ object SDD {
   
 }
 
-
-trait SDDLeaf extends SDD{
+/**
+ * A terminal SDD node could respect a non-terminal vtree node.
+ */
+trait TerminalNode extends SDD{
     
   override def children = Seq()
   
@@ -59,53 +61,57 @@ trait SDDLeaf extends SDD{
     
 }
 
-trait TrueNode extends SDDLeaf {
+/**
+ * Constant or literal nodes are not necessarily leaves (e.g., in normalized SDDs)
+ */
+trait TrueNode extends SDD{
   
-  def usedVars(cache: Cache[Set[Variable]]) = Set.empty
+  // needs to use override everywhere to allow mixing of traits
+  override def usedVars(cache: Cache[Set[Variable]]) = Set.empty
   
-  def modelRatio(cache: Cache[BigRational]) = 1
+  override def modelRatio(cache: Cache[BigRational]) = 1
   
   final override def isConsistent = true
-  final def isConsistent(cache: Cache[Boolean]) = isConsistent
+  final override def isConsistent(cache: Cache[Boolean]) = isConsistent
   
   final override def isValid = true
   
-  def name = s"true (${vtree.variables})"
+  override def name = s"true (${vtree.variables})"
 }
 
 
-trait FalseNode extends SDDLeaf{
+trait FalseNode extends SDD{
   
-  def usedVars(cache: Cache[Set[Variable]]) = Set.empty
+  override def usedVars(cache: Cache[Set[Variable]]) = Set.empty
   
-  def modelRatio(cache: Cache[BigRational]) = 0
+  override def modelRatio(cache: Cache[BigRational]) = 0
   
   final override def isConsistent = false
-  final def isConsistent(cache: Cache[Boolean]) = isConsistent
+  final override def isConsistent(cache: Cache[Boolean]) = isConsistent
   
   final override def isValid = false
   
-  def name = "false"
+  override def name = "false (${vtree.variables})"
 }
 
 
-trait LiteralNode extends SDDLeaf {
+trait LiteralNode extends SDD {
     
-  def modelRatio(cache: Cache[BigRational]) = BigRational(1,2)
+  override def modelRatio(cache: Cache[BigRational]) = BigRational(1,2)
   
   assume(variables.contains(variable), s"Leafs should respect the vtree: ${variables} contains ${variable}")
   
   def literal: logic.Literal
   def variable = literal.variable
   
-  def usedVars(cache: Cache[Set[Variable]]) = Set(variable)
+  override def usedVars(cache: Cache[Set[Variable]]) = Set(variable)
   
   final override def isConsistent = true
-  final def isConsistent(cache: Cache[Boolean]) = isConsistent
+  final override def isConsistent(cache: Cache[Boolean]) = isConsistent
   
   final override def isValid = false
   
-  def name = literal.toString
+  override def name = literal.toString
   
 }
 
@@ -122,9 +128,11 @@ trait DecisionNode[+N <: SDD] extends SDD {
   
   def name = s"N$hashCode"
   
-  def elems: Seq[Element]
-  def primes: Seq[N] = elems.map(_.prime)
-  def subs: Seq[N] = elems.map(_.sub)
+  def primes: Seq[N]
+  def subs: Seq[N]
+  
+  def elems: Seq[Element[N]] = (primes zip subs).map{case (p,s) => Element(p,s)}
+  
   def children: Seq[N] = (primes interleave subs)
   
   def partitionSize = elems.size
@@ -151,13 +159,10 @@ trait DecisionNode[+N <: SDD] extends SDD {
   def isPrimeTrimmable = (partitionSize == 1 && elems(0).prime.isValid)
   def isTrimmable = isPrimeTrimmable || isSubTrimmable
   
-  trait Element {
+  case class Element[+M >: N <: SDD](prime: M, sub: M) {
     
     assume(prime.subRespects(vtree.vl), "XY-Partitions should respect the vtree: " + prime)
     assume(sub.subRespects(vtree.vr), "XY-Partitions should respect the vtree: " + sub)
-    
-    def prime: N
-    def sub: N
             
     def isConsistent(cache: Cache[Boolean]) = prime.isConsistent(cache) && sub.isConsistent(cache)
     def modelRatio(cache: Cache[BigRational]) = prime.modelRatio(cache) * sub.modelRatio(cache)

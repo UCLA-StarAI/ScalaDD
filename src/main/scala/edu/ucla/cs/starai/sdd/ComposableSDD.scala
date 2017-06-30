@@ -4,75 +4,81 @@ import edu.ucla.cs.starai.logic._
 import edu.ucla.cs.starai.graph.DoubleLinkedTree
 import edu.ucla.cs.starai.graph.DAG
 
+/**
+ * An SDD that supports logical transformations with other SDDs of the same type
+ */
 trait ComposableSDD[N <: ComposableSDD[N]] extends SDD with ComposableCircuit[N]{
   
   self: N =>
-    
-  /**
-   * Shorthand for the type of SDD that we are able to compose
-   */
-  final type SDDN = ComposableSDD[N] with N
-  
+      
   override def vtree: BuilderVTree[N]
   
-  def unary_!(): SDDN
-  def |(l: Literal): SDDN
-  def assign(l: Literal): SDDN
+  def unary_!(): N
+  def |(l: Literal): N
+  def assign(l: Literal): N
   
-  def &&(other: SDDN): SDDN
-  def ||(other: SDDN): SDDN
+  def &&(other: N): N
+  def ||(other: N): N
   
-  def kind: Either[ComposableLeafNode[N] with N,ComposableDecisionNode[N] with N]
+  override def kind: Either[ComposableTerminal[N] with N,ComposableDecisionNode[N] with N]
   
 }
 
-trait ComposableLeafNode[N <: ComposableSDD[N]] extends SDDLeaf with ComposableSDD[N] {
+trait FastComposable[N <: ComposableSDD[N]] extends ComposableSDD[N]{
+  
+  self: N =>
+        
+}
+
+trait ComposableTerminal[N <: ComposableSDD[N]] extends TerminalNode with FastComposable[N]{
+  
   self: N =>
     
   override def kind = Left(this)
-
-}
-
-trait ComposableTrueNode[N <: ComposableSDD[N]] extends TrueNode with ComposableLeafNode[N] {
-  
-  self: N =>
-    
-  def unary_!(): SDDN = vtree.buildFalse
-  def |(l: Literal): SDDN = (vtree lca l.variable).buildTrue
-  def assign(l: Literal): SDDN = (vtree lca l.variable).buildLiteral(l)
-  
-  def &&(that: SDDN): SDDN = (this.vtree lca that.vtree).build(that)
-  def ||(that: SDDN): SDDN = (this.vtree lca that.vtree).buildTrue
   
 }
 
-
-trait ComposableFalseNode[N <: ComposableSDD[N]] extends FalseNode with ComposableLeafNode[N]{
+trait ComposableTrueNode[N <: ComposableSDD[N]] extends TrueNode with FastComposable[N]{
   
   self: N =>
     
-  def unary_!(): SDDN = vtree.buildTrue
-  def |(l: Literal): SDDN = (vtree lca l.variable).buildFalse
-  def assign(l: Literal): SDDN  = (vtree lca l.variable).buildFalse
+  // needs to use override everywhere to allow mixing of traits
+  override def unary_!(): N = vtree.buildFalse
+  override def |(l: Literal): N = (vtree lca l.variable).buildTrue
+  override def assign(l: Literal): N = (vtree lca l.variable).buildLiteral(l)
   
-  def &&(that: SDDN): SDDN = (this.vtree lca that.vtree).buildFalse
-  def ||(that: SDDN): SDDN = (this.vtree lca that.vtree).build(that)
+  override def &&(that: N): N = (this.vtree lca that.vtree).decorate(that)
+  override def ||(that: N): N = (this.vtree lca that.vtree).buildTrue
   
 }
 
 
-trait ComposableLiteralNode[N <: ComposableSDD[N]] extends LiteralNode with ComposableLeafNode[N] {
+trait ComposableFalseNode[N <: ComposableSDD[N]] extends FalseNode with FastComposable[N]{
   
   self: N =>
     
-  def unary_!(): SDDN = vtree.buildLiteral(!literal)
+  override def unary_!(): N = vtree.buildTrue
+  override def |(l: Literal): N = (vtree lca l.variable).buildFalse
+  override def assign(l: Literal): N  = (vtree lca l.variable).buildFalse
   
-  def |(l: Literal): SDDN = 
+  override def &&(that: N): N = (this.vtree lca that.vtree).buildFalse
+  override def ||(that: N): N = (this.vtree lca that.vtree).decorate(that)
+  
+}
+
+
+trait ComposableLiteralNode[N <: ComposableSDD[N]] extends LiteralNode with FastComposable[N] {
+  
+  self: N =>
+    
+  override def unary_!(): N = vtree.buildLiteral(!literal)
+  
+  override def |(l: Literal): N = 
     if(this.literal == l) vtree.buildTrue
     else if(this.literal == !l) vtree.buildFalse
     else (this.vtree lca l.variable).buildLiteral(this.literal)
     
-  def assign(l: Literal): SDDN = 
+  override def assign(l: Literal): N = 
     if(this.literal == l) vtree.buildLiteral(this.literal)
     else if(this.literal == !l) vtree.buildFalse
     else {
@@ -82,9 +88,9 @@ trait ComposableLiteralNode[N <: ComposableSDD[N]] extends LiteralNode with Comp
       lca.buildDecomposition(x,y)
     }
     
-  def &&(that: SDDN): SDDN = (that assign literal)
+  override def &&(that: N): N = (that assign literal)
       
-  def ||(that: SDDN): SDDN = !((!that) assign !literal)
+  override def ||(that: N): N = !((!that) assign !literal)
   
 }
 
@@ -100,16 +106,16 @@ trait ComposableDecisionNode[N <: ComposableSDD[N]]
   def falseSub = vtree.vr.buildFalse
   def trueSub = vtree.vr.buildTrue
 
-  def unary_!(): SDDN = vtree.buildPartition(primes, subs.map(!_))
+  def unary_!(): N = vtree.buildPartition(primes, subs.map(!_))
 
-  def |(l: Literal): SDDN = 
+  def |(l: Literal): N = 
     if(vtree.vl contains l.variable) {
       vtree.buildPartition(primes.map(_|l), subs)
     }else if(vtree.vr contains l.variable) {
       vtree.buildPartition(primes, subs.map(_|l))
-    } else (vtree lca l.variable).build(this)
+    } else (vtree lca l.variable).decorate(this)
   
-  def assign(l: Literal): SDDN = 
+  def assign(l: Literal): N = 
     if(vtree.vl contains l.variable) {
       val lNode = vtree.vl.buildLiteral(l)
       vtree.buildPartition(!lNode +: primes.map(_ assign l), falseSub +: subs)
@@ -121,12 +127,16 @@ trait ComposableDecisionNode[N <: ComposableSDD[N]]
       lca.buildDecomposition(this,y)
     }
 
-  def &&(that: SDDN): SDDN = that.kind match{
-    case Left(leaf) => leaf && this
-    case Right(dec) => this && dec
+  /**
+   * If FastComposable, dispatch to other
+   */
+  def &&(that: N): N = that.kind match{
+    case Left(terminal) => terminal && this
+    case Right(decision: FastComposable[N]) => decision && this
+    case Right(decision) => this conjoinDecision decision
   }
   
-  def &&(that: ComposableDecisionNode[N] with SDDN): SDDN = {
+  private[this] def conjoinDecision(that: ComposableDecisionNode[N] with N): N = {
     if(this.vtree == that.vtree){
        val newPrimes = for(x <- this.primes; y <- that.primes) yield (x && y)
        val newSubs = for(x <- this.subs; y <- that.subs) yield (x && y)
@@ -140,7 +150,7 @@ trait ComposableDecisionNode[N <: ComposableSDD[N]]
   /**
    * Conjoin with an argument that respects a vtree node strictly below this node's vtree
    */
-  protected def conjoinBelow(that: ComposableDecisionNode[N] with SDDN): SDDN = {
+  private def conjoinBelow(that: ComposableDecisionNode[N] with N): N = {
     assume(this.vtree contains that.vtree)
     if(this.vtree.vl contains that.vtree){
        this.vtree.buildPartition(!that +: this.primes.map(_ && that), this.falseSub +: this.subs)
@@ -149,7 +159,7 @@ trait ComposableDecisionNode[N <: ComposableSDD[N]]
     }
   }
   
-  def ||(that: SDDN): SDDN = !(!this && !that)
+  def ||(that: N): N = !(!this && !that)
   
 }
 

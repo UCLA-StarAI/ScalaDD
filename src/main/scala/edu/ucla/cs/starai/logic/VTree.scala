@@ -13,6 +13,7 @@ trait VTree[+N <: VTree[N]] extends DoubleLinkedTree[N] {
     
   def contains(v: Variable): Boolean = variables.contains(v)
   def variables: Set[Variable]
+  def literals: Set[Literal] = variables.map(!_.toLiteral) union variables.map(_.toLiteral)
   def numVariables = variables.size
     
   def lca(v: Variable): N = ancestors.find(_.contains(v)).get

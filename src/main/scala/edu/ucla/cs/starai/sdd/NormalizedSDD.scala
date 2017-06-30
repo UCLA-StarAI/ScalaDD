@@ -13,12 +13,12 @@ trait NormalizedDecision[+N <: Normalized] extends DecisionNode[N] with Normaliz
     
   def vtree: VTreeINode[_]
     
-  assume(primes.forall{_.subRespects(vtree.vl)}, "no vtree nodes are skipped")
-  assume(subs.forall{_.subRespects(vtree.vr)}, "no vtree nodes are skipped")
+  assume(primes.forall{_.respects(vtree.vl)}, "no vtree nodes are skipped")
+  assume(subs.forall{_.respects(vtree.vr)}, "no vtree nodes are skipped")
   
 }
 
-trait NormalizedLeaf extends SDDLeaf with Normalized {
+trait NormalizedTerminal extends TerminalNode with Normalized {
   
   def vtree: VTreeLeaf[_]
   

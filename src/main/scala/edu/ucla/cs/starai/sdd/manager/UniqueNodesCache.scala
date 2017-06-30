@@ -1,16 +1,20 @@
-//package edu.ucla.cs.starai.sdd.manager
-//
-//import java.util.concurrent.atomic.AtomicLong
-//
-//import com.google.common.cache.Cache
-//import com.google.common.cache.CacheBuilder
-//import com.google.common.cache.CacheStats
-//
-//trait UniqueNodes extends (Seq[ManagedSDDElemNodeImpl] => ManagedSDDDecNodeImpl){
-//  
-//  def cacheSize: Long
-//  
-//}
+package edu.ucla.cs.starai.sdd.manager
+
+import java.util.concurrent.atomic.AtomicLong
+
+import com.google.common.cache.Cache
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheStats
+import edu.ucla.cs.starai.sdd.SDD
+
+trait UniqueNodesCache[N <: SDD] {
+  
+  def cacheSize: Long
+  
+  def getOrBuild(primes: Seq[N], subs: Seq[N], build: => N): N
+  
+}
+
 //
 //// make sure cache is symmetric wrt arguments
 //// make sure cache keys cannot reference cache values, or auto-GC is broken!
