@@ -10,7 +10,7 @@ import edu.ucla.cs.starai.util._
 
 trait SDD extends Circuit[SDD] with Tractable {
     
-  def vtree: VTree[_]
+  def vtree: VTree[T] forSome { type T <: VTree[T] } // silly that these bounds need to be repeated
     
   def respects(vtree: VTree[_]) = (vtree == this.vtree)
   def subRespects(vtree: VTree[_]) = (vtree.contains(this.vtree))
@@ -59,12 +59,16 @@ trait TerminalNode extends SDD{
   
   def kind = Left(this)
     
+  def terminalKind: Either3[LiteralNode,TrueNode,FalseNode]
+
 }
 
 /**
  * Constant or literal nodes are not necessarily leaves (e.g., in normalized SDDs)
  */
 trait TrueNode extends SDD{
+  
+  def terminalKind = Mid3(this)
   
   // needs to use override everywhere to allow mixing of traits
   override def usedVars(cache: Cache[Set[Variable]]) = Set.empty
@@ -82,6 +86,8 @@ trait TrueNode extends SDD{
 
 trait FalseNode extends SDD{
   
+  def terminalKind = Right3(this)
+  
   override def usedVars(cache: Cache[Set[Variable]]) = Set.empty
   
   override def modelRatio(cache: Cache[BigRational]) = 0
@@ -97,6 +103,8 @@ trait FalseNode extends SDD{
 
 trait LiteralNode extends SDD {
     
+  def terminalKind = Left3(this)
+  
   override def modelRatio(cache: Cache[BigRational]) = BigRational(1,2)
   
   assume(variables.contains(variable), s"Leafs should respect the vtree: ${variables} contains ${variable}")
@@ -119,7 +127,7 @@ trait DecisionNode[+N <: SDD] extends SDD {
   
   self: N =>
   
-  override def vtree: VTreeINode[_]
+  override def vtree: VTreeINode[T] forSome { type T <: VTree[T] }
   
   assume(primes.forall{_.subRespects(vtree.vl)},"decompositions follow the vtree")
   assume(subs.forall{_.subRespects(vtree.vr)},"decompositions follow the vtree")

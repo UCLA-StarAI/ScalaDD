@@ -1,7 +1,7 @@
 package edu.ucla.cs.starai;
 
-import edu.ucla.cs.starai.sdd.manager.SDDManager
 import edu.ucla.cs.starai.logic._
+import edu.ucla.cs.starai.sdd.manager.normalized.SDDManager
 
 
 object SDDManagerScratch extends App {
@@ -12,17 +12,17 @@ object SDDManagerScratch extends App {
   
   val mgr = SDDManager(vtree)
   
-  println(s"False size = ${mgr.False.sddSize}")
-  println(s"False model count = ${mgr.False.modelCount}")
+  println(s"False size = ${mgr.buildFalse.sddSize}")
+  println(s"False model count = ${mgr.buildFalse.modelCount}")
   
-  val x1 = mgr.literal(1)
-  val x2 = mgr.literal(2)
-  val x3 = mgr.literal(3)
-  val x4 = mgr.literal(4)
-  val x5 = mgr.literal(5)
-  val x6 = mgr.literal(6)
-  val x7 = mgr.literal(7)
-  val x8 = mgr.literal(8)
+  val x1 = mgr.buildLiteral(1)
+  val x2 = mgr.buildLiteral(2)
+  val x3 = mgr.buildLiteral(3)
+  val x4 = mgr.buildLiteral(4)
+  val x5 = mgr.buildLiteral(5)
+  val x6 = mgr.buildLiteral(6)
+  val x7 = mgr.buildLiteral(7)
+  val x8 = mgr.buildLiteral(8)
   
   val c1 = !x1 ||  x2 || !x5
   println(s"Clause 1 size = ${c1.sddSize}")
@@ -48,7 +48,7 @@ object SDDManagerScratch extends App {
   println(s"UNSAT size = ${unsat.sddSize}")
   println(s"UNSAT model count = ${unsat.modelCount}")
   
-  println(s"Manager unique nodes cache size = ${mgr.uniqueNodesCacheSize}")
+//  println(s"Manager unique nodes cache size = ${mgr.uniqueNodesCacheSize}")
   
   
   println(s"UNSAT SDD = ")

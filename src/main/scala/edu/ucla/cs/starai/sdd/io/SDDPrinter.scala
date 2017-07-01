@@ -1,40 +1,39 @@
 package edu.ucla.cs.starai.sdd.io
 
 import java.io.PrintStream
+import edu.ucla.cs.starai.sdd.TrueNode
+import edu.ucla.cs.starai.sdd.FalseNode
+import edu.ucla.cs.starai.sdd.SDD
+import edu.ucla.cs.starai.sdd.DecisionNode
+import edu.ucla.cs.starai.sdd.LiteralNode
+import edu.ucla.cs.starai.logic.VTree
+import edu.ucla.cs.starai.util.Mid3
+import edu.ucla.cs.starai.util.Left3
+import edu.ucla.cs.starai.util.Right3
+import java.util.concurrent.atomic.AtomicInteger
 
 final class SDDPrinter(output: PrintStream, verbose: Boolean = false) {
 
-//  def print(node: SDD) {
-//    
-//    val vtreeIds = node.vtree.toIndexedSeq.zipWithIndex.toMap
-//    var id = 0
-//    
-//    def input(leaf: SDDLeaf) = {
-//      val vtreeId = vtreeIds(leaf.vtree)
-//      leaf match {
-//        case leaf: TrueNode    => output.println(s"T $id $vtreeId")
-//        case leaf: FalseNode   => output.println(s"F $id $vtreeId")
-//        case leaf: LiteralNode => output.println(s"L $id $vtreeId ${leaf.literal}")
-//      }
-//      id = id + 1
-//      s"$id"
-//    }
-//    
-//    def propagate(inode: SDDINode, childIDs: Seq[String]) = {
-//      val vtreeId = vtreeIds(inode.vtree)
-//      inode match {
-//        case _: DecisionNode => {
-//          output.println(s"D $id $vtreeId ${childIDs.size} ${childIDs.mkString(" ")}")
-//          id = id + 1
-//          s"$id"
-//        }
-//        case _: ElementNode => { childIDs.mkString(" ") }
-//        case _              => throw new IllegalArgumentException()
-//      }
-//    }
-//    
-//    node.foldUp(input, propagate)
-//    
-//  }
+  def print(node: SDD) {
+    val vtreeIds: Map[VTree[_],Int] = 
+      node.vtree.iterator.toIndexedSeq.zipWithIndex.toMap
+    var nodeId = 0
+    def propagate(node: SDD, childIDs: Seq[String]) = {
+      val vtreeId = vtreeIds(node.vtree)
+      node.kind match {
+        case Right(decision) => {
+          output.println(s"D $nodeId $vtreeId ${childIDs.size} ${childIDs.mkString(" ")}")
+        }
+        case Left(terminal) => terminal.terminalKind match{
+          case Left3(x) => output.println(s"L $nodeId $vtreeId ${x.literal}")
+          case Mid3(x) => output.println(s"T $nodeId $vtreeId")
+          case Right3(x) => output.println(s"F $nodeId $vtreeId")
+        }  
+      }
+      nodeId = nodeId + 1
+      nodeId.toString
+    }
+    node.foldUp(propagate)
+  }
 
 }

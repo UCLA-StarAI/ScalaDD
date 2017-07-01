@@ -130,6 +130,7 @@ trait ComposableDecisionNode[N <: ComposableSDD[N]]
   /**
    * If FastComposable, dispatch to other
    */
+  // TODO optimize for decompositions of size 1 and 2
   def &&(that: N): N = that.kind match{
     case Left(terminal) => terminal && this
     case Right(decision: FastComposable[N]) => decision && this

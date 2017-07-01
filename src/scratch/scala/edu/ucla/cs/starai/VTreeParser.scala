@@ -12,8 +12,8 @@ object VtreeParserScratch extends App {
   
   println(s"Size = ${vtree.size}")
   println(s"Vars = ${vtree.variables}")
-  println(s"Left size = ${vtree.asInstanceOf[VTreeINode].vl.size}")
-  println(s"Right size = ${vtree.asInstanceOf[VTreeINode].vr.size}")
+  println(s"Left size = ${vtree.asInstanceOf[VTreeINode[_]].vl.size}")
+  println(s"Right size = ${vtree.asInstanceOf[VTreeINode[_]].vr.size}")
   
 }
 

@@ -30,13 +30,13 @@ trait ManagedDecision extends ManagedSDD
   
   def vtree: SDDManagerINode
   
+  override lazy val unary_! = super.unary_!
+  
 }
 
 trait ManagedTerminal extends ManagedSDD with ComposableTerminal[ManagedSDD] with NormalizedTerminal {
     
   def vtree: SDDManagerLeaf
-  
-  //override def kind = Left(this)
   
 }
 

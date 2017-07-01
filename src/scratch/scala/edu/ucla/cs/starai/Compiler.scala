@@ -42,17 +42,17 @@ object CompilerScratch extends App {
   println(s"SDD used vars number = ${sdd.usedVars.size}")
   
   println(s"SDD size = ${sdd.sddSize}")
-  println(s"SDD nodes = ${sdd.sddNodes}")
+  println(s"SDD nodes = ${sdd.numNodes}")
   
-  println(s"Trimmed SDD size = ${sdd.trimmedSize}")
-  println(s"Trimmed SDD number of nodes = ${sdd.trimmedNumNodes}")
-  println(sdd.trim)
+//  println(s"Trimmed SDD size = ${sdd.trimmedSize}")
+//  println(s"Trimmed SDD number of nodes = ${sdd.trimmedNumNodes}")
+//  println(sdd.trim)
   
   println(s"Interpretation count = ${BigInt(2).pow(cnf.numVars)}")
   println(s"SDD model count = ${sdd.modelCount}")
   println(s"SDD used model count = ${sdd.usedVarsModelCount}")
   
-  println(s"Manager unique nodes cache size = ${sdd.manager.uniqueNodesCacheSize}")
+//  println(s"Manager unique nodes cache size = ${sdd.vtree.uniqueNodesCache}")
     
 }
 

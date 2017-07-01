@@ -12,9 +12,23 @@ import edu.ucla.cs.starai.sdd.FalseNode
 import edu.ucla.cs.starai.sdd.manager.UniqueNodesCache
 
 
-trait SDDManager extends VTree[SDDManager] with BuilderVTree[ManagedSDD]
+trait SDDManager extends VTree[SDDManager] with BuilderVTree[ManagedSDD]{
+  
+  def kind: Either[SDDManagerLeaf,SDDManagerINode]
+  
+}
+
+object SDDManager{
+  
+  def apply(vtree: VTree[_]): SDDManager = SDDManagerImpl(vtree)
+  
+}
+
+trait ChildSDDManager extends ChildVTree with SDDManager 
 
 trait SDDManagerLeaf extends SDDManager with VTreeLeaf[SDDManager] {
+  
+  override def kind = Left(this)
   
   private abstract class MyTerminal extends ManagedTerminal{
     def vtree = SDDManagerLeaf.this
@@ -54,6 +68,8 @@ trait SDDManagerLeaf extends SDDManager with VTreeLeaf[SDDManager] {
 
 trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
   
+  override def kind = Right(this)
+  
   def uniqueNodesCache: UniqueNodesCache[ManagedSDD]
   
   private class MyDecision(val primes: Seq[ManagedSDD], val subs: Seq[ManagedSDD]) 
@@ -61,16 +77,14 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
     def vtree = SDDManagerINode.this
   }
   
-  private[this] val truePrimes = Seq(vl.buildTrue)
-  private[this] val trueSubs = Seq(vr.buildTrue)
-  private[this] val falseSubs = Seq(vr.buildFalse)
-  private[this] val trueFalseSubs = Seq(vr.buildTrue,vr.buildFalse)
+  private[this] val trimmablePrimes = Seq(vl.buildTrue)
+  private[this] val trimmableSubs = Seq(vr.buildTrue,vr.buildFalse)
   
-  val buildTrue = uniqueNodesCache.getOrBuild(truePrimes, trueSubs,
-      new MyDecision(truePrimes,trueSubs) with ManagedTrue)
+  val buildTrue = uniqueNodesCache.getOrBuild(trimmablePrimes, Seq(vr.buildTrue),
+      () => new MyDecision(trimmablePrimes,Seq(vr.buildTrue)) with ManagedTrue)
       
-  val buildFalse = uniqueNodesCache.getOrBuild(truePrimes, falseSubs,
-      new MyDecision(truePrimes,falseSubs) with ManagedFalse)
+  val buildFalse = uniqueNodesCache.getOrBuild(trimmablePrimes, Seq(vr.buildFalse),
+      () => new MyDecision(trimmablePrimes,Seq(vr.buildFalse)) with ManagedFalse)
       
       
   override def buildLiteral(l: Literal) = literalCache(l)
@@ -78,15 +92,15 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
   protected val literalCache: Map[Literal,ManagedSDD] = (
        vl.literals.map{ l => 
          val primes = Seq(vl.buildLiteral(l),!vl.buildLiteral(l))
-         (l-> uniqueNodesCache.getOrBuild(primes, trueFalseSubs,
-           new MyDecision(primes,trueFalseSubs) with ManagedLiteral {
+         (l-> uniqueNodesCache.getOrBuild(primes, trimmableSubs,
+           () => new MyDecision(primes,trimmableSubs) with ManagedLiteral {
              def literal = l
            }))
        } ++ 
        vr.literals.map{ l => 
          val subs = Seq(vr.buildLiteral(l))
-         (l->uniqueNodesCache.getOrBuild(truePrimes, subs,
-           new MyDecision(truePrimes,subs) with ManagedLiteral {
+         (l->uniqueNodesCache.getOrBuild(trimmablePrimes, subs,
+           () => new MyDecision(trimmablePrimes,subs) with ManagedLiteral {
              def literal = l
            }))
        }).toMap
@@ -106,7 +120,7 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
     	  val (subsIter,primesIter) = primeBySub.unzip
     	  (primesIter.toSeq,subsIter.toSeq)
       }
-     uniqueNodesCache.getOrBuild(newPrimes, newSubs, new MyDecision(newPrimes,newSubs))
+     uniqueNodesCache.getOrBuild(newPrimes, newSubs, () => new MyDecision(newPrimes,newSubs))
   }
   
   def buildDecomposition(x: ManagedSDD, y: ManagedSDD): ManagedSDD = {
@@ -122,10 +136,10 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
     } else if(!this.contains(sdd.vtree)){
       throw new IllegalArgumentException(s"$this cannot build sdds for other managers")
     } else if(vl.contains(sdd.vtree)){
-      buildPartition(Seq(sdd,!sdd),trueFalseSubs)
+      buildPartition(Seq(sdd,!sdd),trimmableSubs)
     }else{
       assume(vr.contains(sdd.vtree))
-      buildPartition(truePrimes,Seq(sdd))
+      buildPartition(trimmablePrimes,Seq(sdd))
     }
   }
   

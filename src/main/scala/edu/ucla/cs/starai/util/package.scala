@@ -1,11 +1,15 @@
 package edu.ucla.cs.starai
 
-import scala.collection.mutable
+import java.util.concurrent.Callable
 
 package object util {
 
   def assertFalse = assert(false);
    
+  implicit def runnable(f: () => Unit): Runnable = new Runnable() { def run() = f() }
+
+  implicit def callable[T](f: () => T): Callable[T] = new Callable[T]() { def call() = f() }
+  
   implicit class SetOps[T](val x: Set[T]) {
   
     def overlaps(y: Set[T]): Boolean = {

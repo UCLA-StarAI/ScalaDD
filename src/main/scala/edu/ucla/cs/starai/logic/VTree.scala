@@ -36,7 +36,7 @@ object VTree{
   
   def balanced(numVars: Int, offset: Int=0): VTree[_] = balancedImpl(numVars,offset)
   
-  private def balancedImpl(numVars: Int, offset: Int): VTreeImpl = {
+  private def balancedImpl(numVars: Int, offset: Int): ChildVTree = {
     assume(numVars > 0)
     assume(offset >=0)
     if(numVars == 1) return new VTreeLeafImpl(offset+1)
@@ -78,11 +78,10 @@ trait VTreeINode[+N <: VTree[N]] extends VTree[N] {
   
 }
 
-//************************
-// vtree implementations
-//************************
-
-abstract class VTreeImpl extends VTree[VTreeImpl]{
+/**
+ * A VTree whose parent can be set
+ */
+trait ChildVTree extends VTree[ChildVTree]{
   
   private var _parent: Option[VTreeINodeImpl] = None
   protected[logic] def setParent(p: VTreeINodeImpl){
@@ -92,23 +91,5 @@ abstract class VTreeImpl extends VTree[VTreeImpl]{
   }
   
   def parent: Option[VTreeINodeImpl] = _parent
-  
-  override val root = super.root
-  
-}
-
-class VTreeLeafImpl(val variable: Variable) extends VTreeImpl with VTreeLeaf[VTreeImpl] {
-    
-  override val variables = super.variables
-  
-}
-
-class VTreeINodeImpl(val vl: VTreeImpl, val vr: VTreeImpl) extends VTreeImpl with VTreeINode[VTreeImpl] {
-
-  vl.setParent(this)
-  vr.setParent(this)
-  
-  override val variables = super.variables
-  override val children = super.children
   
 }

@@ -63,4 +63,6 @@ trait ComposableCircuit[N <: ComposableCircuit[N]] extends Circuit[N] {
   final def ∧(other: N) = &&(other)
   final def ∨(other: N) = ||(other)
   
+  //TODO add specialized "conjoin with clause" to speed up CNF compilation
+  
 }
