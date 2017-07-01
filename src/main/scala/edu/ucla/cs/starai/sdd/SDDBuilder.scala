@@ -38,5 +38,4 @@ trait BuilderVTree[N <: SDD] extends DoubleLinkedTree[BuilderVTree[N]]
   with SDDBuilder[N] {
   
   
-  
 }

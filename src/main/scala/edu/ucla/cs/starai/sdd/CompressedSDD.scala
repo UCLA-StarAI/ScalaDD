@@ -9,6 +9,6 @@ trait CompressedDecision[+N <: Compressed] extends DecisionNode[N] with Compress
   
   self: N =>
     
-  assume(subs.distinctElements, "Compressed SDDs cannot have repeated subs")
+  assume(subs.hasDistinctElements, "Compressed SDDs cannot have repeated subs")
   
 }

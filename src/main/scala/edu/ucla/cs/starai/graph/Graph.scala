@@ -6,7 +6,7 @@ trait Graph[+N] extends Iterable[N] {
    * Does this graph contain the given subgraph?
    * Takes any graph in order to covariant in N
    */
-  def contains(node: Graph[_]): Boolean = exists { node == _ }
+  def contains[M >: N](node: M): Boolean = exists { node == _ }
   
   def numNodes: Int = iterator.length
   def numEdges: Int

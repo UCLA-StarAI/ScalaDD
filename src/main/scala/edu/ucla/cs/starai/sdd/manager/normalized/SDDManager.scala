@@ -25,6 +25,7 @@ trait SDDManagerLeaf extends SDDManager with VTreeLeaf[SDDManager] {
   val posLit: ManagedTerminal = new MyTerminal with ManagedLiteral{
     def literal = vtree.variable
   }
+  posLit.sddSize
   val negLit: ManagedTerminal = new MyTerminal with ManagedLiteral{
     def literal = !vtree.variable
   }
@@ -55,7 +56,7 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
   
   def uniqueNodesCache: UniqueNodesCache[ManagedSDD]
   
-  private abstract class MyDecision(val primes: Seq[ManagedSDD], val subs: Seq[ManagedSDD]) 
+  private class MyDecision(val primes: Seq[ManagedSDD], val subs: Seq[ManagedSDD]) 
     extends ManagedDecision {
     def vtree = SDDManagerINode.this
   }
@@ -90,15 +91,42 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
            }))
        }).toMap
   
-       
+  def buildPartition(primes: Seq[ManagedSDD], subs: Seq[ManagedSDD]): ManagedSDD = {
+    val compressed = subs.hasDistinctElements
+    val consistentPrimes = primes.forall(_.isConsistent)
+    val (newPrimes,newSubs) = 
+      if(compressed && consistentPrimes) (primes,subs)
+      else {
+        // remove inconsistent primes
+        val elems = (primes zip subs).filter(_._1.isConsistent)
+        // compress
+        val primesBySub = elems.groupBy(_._2 ).mapValues { _.map( _._1) }
+    	  val primeBySub = primesBySub.mapValues { _.reduce { (p1, p2) => p1 || p2 } 
+  	                                              /*TODO: optimize this order*/ }
+    	  val (subsIter,primesIter) = primeBySub.unzip
+    	  (primesIter.toSeq,subsIter.toSeq)
+      }
+     uniqueNodesCache.getOrBuild(newPrimes, newSubs, new MyDecision(newPrimes,newSubs))
+  }
   
-//  def buildPartition(primes: Seq[ManagedSDD],subs: Seq[ManagedSDD]): ManagedDecision = {
-//    throw new IllegalArgumentException(s"$this cannot build partitions")
-//  }
-//  
-//  def buildDecomposition(x: ManagedSDD, y: ManagedSDD): ManagedDecision = {
-//    throw new IllegalArgumentException(s"$this cannot build decompositions")
-//  }
+  def buildDecomposition(x: ManagedSDD, y: ManagedSDD): ManagedSDD = {
+    val (prime,sub) = if(vl.contains(x.vtree)) (x,y) else (y,x)
+    assume(vl.contains(prime.vtree))
+    assume(vr.contains(sub.vtree))
+    buildPartition(Seq(prime,!prime),Seq(sub,vr.buildFalse))
+  }
   
+  def decorate(sdd: ManagedSDD): ManagedSDD = {
+    if(sdd.vtree == this) {
+      return sdd
+    } else if(!this.contains(sdd.vtree)){
+      throw new IllegalArgumentException(s"$this cannot build sdds for other managers")
+    } else if(vl.contains(sdd.vtree)){
+      buildPartition(Seq(sdd,!sdd),trueFalseSubs)
+    }else{
+      assume(vr.contains(sdd.vtree))
+      buildPartition(truePrimes,Seq(sdd))
+    }
+  }
   
 }

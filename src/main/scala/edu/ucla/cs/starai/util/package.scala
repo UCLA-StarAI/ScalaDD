@@ -16,7 +16,7 @@ package object util {
   
   implicit class SeqOps[T](val x: Seq[T]) {
   
-    def distinctElements: Boolean =  x.toSet.size == x.size
+    def hasDistinctElements: Boolean =  x.toSet.size == x.size
     
     def interleave(y: Seq[T]): Seq[T] = {
       x.zip(y) flatMap { case (a, b) => Seq(a, b) }
