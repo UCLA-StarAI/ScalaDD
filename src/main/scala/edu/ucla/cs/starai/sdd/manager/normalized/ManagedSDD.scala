@@ -42,7 +42,7 @@ trait ManagedTrue extends ManagedSDD with ComposableTrueNode[ManagedSDD]
 trait ManagedFalse extends ManagedSDD with ComposableFalseNode[ManagedSDD]
 trait ManagedLiteral extends ManagedSDD with ComposableLiteralNode[ManagedSDD]
 
-trait CachedNegation extends ManagedSDD{
+trait CachedNegation extends ManagedSDD {
   
     override abstract lazy val unary_! = super.unary_!
     

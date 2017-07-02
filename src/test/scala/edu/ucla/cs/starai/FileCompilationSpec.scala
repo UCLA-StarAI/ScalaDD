@@ -1,12 +1,12 @@
 package edu.ucla.cs.starai;
 
+import scala.io.Source
+
 import org.scalatest.FlatSpec
 
 import edu.ucla.cs.starai.logic._
-import edu.ucla.cs.starai.sdd.manager.SDDManager
-import scala.io.Source
-import edu.ucla.cs.starai.sdd.TreeCompiler
 import edu.ucla.cs.starai.logic.io.VTreeParser
+import edu.ucla.cs.starai.sdd.TreeCompiler
 
 class FileCompilationSpec extends FlatSpec with SDDBehaviors {
   

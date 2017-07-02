@@ -24,7 +24,7 @@ object SDDManagerScratch extends App {
   val x7 = mgr.buildLiteral(7)
   val x8 = mgr.buildLiteral(8)
   
-  val c1 = !x1 ||  x2 || !x5
+  val c1 = !x1 ∨ x2 || !x5
   println(s"Clause 1 size = ${c1.sddSize}")
   println(s"Clause 1 model count = ${c1.modelCount}")
   
@@ -40,7 +40,7 @@ object SDDManagerScratch extends App {
   val c8 = !x5 ||  x6 || !x7
   val c9 =  x6 ||  x7 || !x8
   
-  val cnf = c1 && c2 && c3 && c4 && c5 && c6 && c7 && c8 && c9
+  val cnf = c1 ∧ c2 && c3 && c4 && c5 && c6 && c7 && c8 && c9
   println(s"CNF size = ${cnf.sddSize}")
   println(s"CNF model count = ${cnf.modelCount}")
   

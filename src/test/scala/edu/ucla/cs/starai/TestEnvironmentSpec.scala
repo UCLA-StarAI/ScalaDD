@@ -3,7 +3,6 @@ package edu.ucla.cs.starai;
 import org.scalatest.FlatSpec
 
 import edu.ucla.cs.starai.logic._
-import edu.ucla.cs.starai.sdd.manager.SDDManager
 
 class TestEnvironmentSpec extends FlatSpec {
 
