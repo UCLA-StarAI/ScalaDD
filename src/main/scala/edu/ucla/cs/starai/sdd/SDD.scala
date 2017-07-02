@@ -10,7 +10,7 @@ import edu.ucla.cs.starai.util._
 
 trait SDD extends Circuit[SDD] with Tractable {
     
-  def vtree: VTree[T] forSome { type T <: VTree[T] } // silly that these bounds need to be repeated
+  def vtree: VTree.SomeVtree // silly that these bounds need to be repeated
     
   def respects(vtree: VTree[_]) = (vtree == this.vtree)
   def subRespects(vtree: VTree[_]) = (vtree.contains(this.vtree))

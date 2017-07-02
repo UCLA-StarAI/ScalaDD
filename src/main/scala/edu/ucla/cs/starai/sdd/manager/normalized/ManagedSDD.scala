@@ -30,8 +30,6 @@ trait ManagedDecision extends ManagedSDD
   
   def vtree: SDDManagerINode
   
-  override lazy val unary_! = super.unary_!
-  
 }
 
 trait ManagedTerminal extends ManagedSDD with ComposableTerminal[ManagedSDD] with NormalizedTerminal {
@@ -44,3 +42,8 @@ trait ManagedTrue extends ManagedSDD with ComposableTrueNode[ManagedSDD]
 trait ManagedFalse extends ManagedSDD with ComposableFalseNode[ManagedSDD]
 trait ManagedLiteral extends ManagedSDD with ComposableLiteralNode[ManagedSDD]
 
+trait CachedNegation extends ManagedSDD{
+  
+    override abstract lazy val unary_! = super.unary_!
+    
+}

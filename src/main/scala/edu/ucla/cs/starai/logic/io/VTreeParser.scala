@@ -2,11 +2,11 @@ package edu.ucla.cs.starai.logic.io
 
 import scala.io.Source
 
-import edu.ucla.cs.starai.logic.ChildVTree
 import edu.ucla.cs.starai.logic.VTree
 import edu.ucla.cs.starai.logic.VTreeINodeImpl
 import edu.ucla.cs.starai.logic.VTreeLeafImpl
 import edu.ucla.cs.starai.logic.Variable
+import edu.ucla.cs.starai.logic.VTreeImpl
 
 
 /**
@@ -17,7 +17,7 @@ class VTreeParser(verbosity: Int = 0) {
   // used for IO
   // TODO clean up, use proper parser
   
-  def parse(src: Source): VTree[_] = {
+  def parse(src: Source): VTree.SomeVtree = {
     //c ids of vtree nodes start at 0
     //c ids of variables start at 1
     //c vtree nodes appear bottom-up, children before parents
@@ -38,8 +38,8 @@ class VTreeParser(verbosity: Int = 0) {
     require(vtreeLine.size == 2, "Invalid: " + code.head)
     require(vtreeLine.head == "vtree", "Line should start with 'vtree': " + code.head)
     val nbNodes = vtreeLine(1).toInt
-    val vtreeNodes = Array.ofDim[ChildVTree](nbNodes)
-    var lastNode: VTree[_] = null // needed because node index may not be bottom-up
+    val vtreeNodes = Array.ofDim[VTreeImpl](nbNodes)
+    var lastNode: VTreeImpl = null // needed because node index may not be bottom-up
     for (linei <- 0 until nbNodes) {
       if (verbosity>1 ) println("Reading VTree file "+(linei*100/nbNodes)+"%")
       val line = code(1 + linei).split(" ").toList

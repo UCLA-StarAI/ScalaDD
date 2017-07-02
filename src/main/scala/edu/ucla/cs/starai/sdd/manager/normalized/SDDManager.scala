@@ -20,11 +20,9 @@ trait SDDManager extends VTree[SDDManager] with BuilderVTree[ManagedSDD]{
 
 object SDDManager{
   
-  def apply(vtree: VTree[_]): SDDManager = SDDManagerImpl(vtree)
+  def apply(vtree: VTree.SomeVtree): SDDManager = SDDManagerImpl(vtree)
   
 }
-
-trait ChildSDDManager extends ChildVTree with SDDManager 
 
 trait SDDManagerLeaf extends SDDManager with VTreeLeaf[SDDManager] {
   
@@ -81,10 +79,10 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
   private[this] val trimmableSubs = Seq(vr.buildTrue,vr.buildFalse)
   
   val buildTrue = uniqueNodesCache.getOrBuild(trimmablePrimes, Seq(vr.buildTrue),
-      () => new MyDecision(trimmablePrimes,Seq(vr.buildTrue)) with ManagedTrue)
+      () => new MyDecision(trimmablePrimes,Seq(vr.buildTrue)) with ManagedTrue with CachedNegation)
       
   val buildFalse = uniqueNodesCache.getOrBuild(trimmablePrimes, Seq(vr.buildFalse),
-      () => new MyDecision(trimmablePrimes,Seq(vr.buildFalse)) with ManagedFalse)
+      () => new MyDecision(trimmablePrimes,Seq(vr.buildFalse)) with ManagedFalse with CachedNegation)
       
       
   override def buildLiteral(l: Literal) = literalCache(l)
@@ -93,14 +91,14 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
        vl.literals.map{ l => 
          val primes = Seq(vl.buildLiteral(l),!vl.buildLiteral(l))
          (l-> uniqueNodesCache.getOrBuild(primes, trimmableSubs,
-           () => new MyDecision(primes,trimmableSubs) with ManagedLiteral {
+           () => new MyDecision(primes,trimmableSubs) with ManagedLiteral with CachedNegation {
              def literal = l
            }))
        } ++ 
        vr.literals.map{ l => 
          val subs = Seq(vr.buildLiteral(l))
          (l->uniqueNodesCache.getOrBuild(trimmablePrimes, subs,
-           () => new MyDecision(trimmablePrimes,subs) with ManagedLiteral {
+           () => new MyDecision(trimmablePrimes,subs) with ManagedLiteral with CachedNegation {
              def literal = l
            }))
        }).toMap

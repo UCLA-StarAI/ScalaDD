@@ -30,18 +30,13 @@ trait VTree[+N <: VTree[N]] extends DoubleLinkedTree[N] {
 
 object VTree{
   
+  type SomeVtree = VTree[T] forSome { type T <: VTree[T] }
+  
   /**
    * Generate balanced vtree for variables X{offset+1} to X{offset+numVars} inclusive
    */
-  
-  def balanced(numVars: Int, offset: Int=0): VTree[_] = balancedImpl(numVars,offset)
-  
-  private def balancedImpl(numVars: Int, offset: Int): ChildVTree = {
-    assume(numVars > 0)
-    assume(offset >=0)
-    if(numVars == 1) return new VTreeLeafImpl(offset+1)
-    else return new VTreeINodeImpl(balancedImpl(numVars/2,offset),balancedImpl(numVars-numVars/2,offset+numVars/2))
-  }
+  def balanced(numVars: Int, offset: Int=0): SomeVtree = 
+    VTreeImpl.balanced(numVars,offset)
   
 }
 
@@ -72,24 +67,7 @@ trait VTreeINode[+N <: VTree[N]] extends VTree[N] {
   
   def kind = Right(this)
   
-  def variables = vl.variables union vr.variables
-  
-  def children = Seq(vl,vr)
-  
-}
-
-/**
- * A VTree whose parent can be set
- */
-trait ChildVTree extends VTree[ChildVTree]{
-  
-  private var _parent: Option[VTreeINodeImpl] = None
-  protected[logic] def setParent(p: VTreeINodeImpl){
-    require(p != null)
-    require(_parent.isEmpty, s"DoubleLinkedTree $this cannot have multiple parents ($parent and $p)")
-    _parent = Some(p)
-  }
-  
-  def parent: Option[VTreeINodeImpl] = _parent
+  override val  variables = vl.variables union vr.variables
+  override val  children = Seq(vl,vr)
   
 }
