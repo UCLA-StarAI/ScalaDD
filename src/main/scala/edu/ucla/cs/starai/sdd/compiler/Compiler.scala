@@ -1,4 +1,4 @@
-package edu.ucla.cs.starai.sdd
+package edu.ucla.cs.starai.sdd.compiler
 
 import edu.ucla.cs.starai.logic.Clause
 import edu.ucla.cs.starai.logic.DimacsCNF

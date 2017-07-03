@@ -4,6 +4,7 @@ import edu.ucla.cs.starai.logic.VTreeLeafImpl
 import edu.ucla.cs.starai.logic._
 import edu.ucla.cs.starai.util.Child
 import edu.ucla.cs.starai.sdd.manager.GoogleWeakCache
+import edu.ucla.cs.starai.sdd.manager.UniqueNodesCache
 
 abstract class SDDManagerImpl extends SDDManager with Child[SDDManagerImpl]
 
@@ -18,17 +19,15 @@ object SDDManagerImpl{
   
 }
 
-class ManagedSDDLeafImpl(val variable: Variable) 
-  extends SDDManagerImpl with SDDManagerLeaf{
-    
-  override val variables = super.variables
+class ManagedSDDLeafImpl(_variable: Variable) 
+  extends { val variable = _variable } 
+  with SDDManagerImpl with SDDManagerLeaf{
   
 }
 
-class ManagedSDDINodeImpl(val vl: SDDManagerImpl, val vr: SDDManagerImpl) 
-  extends SDDManagerImpl with SDDManagerINode {
-
-  val uniqueNodesCache = new GoogleWeakCache
+class ManagedSDDINodeImpl(val vl: SDDManagerImpl, val vr: SDDManagerImpl) extends {
+    val uniqueNodesCache: UniqueNodesCache[ManagedSDD] = new GoogleWeakCache
+  } with SDDManagerImpl with SDDManagerINode {
   
   vl.setParent(this)
   vr.setParent(this)

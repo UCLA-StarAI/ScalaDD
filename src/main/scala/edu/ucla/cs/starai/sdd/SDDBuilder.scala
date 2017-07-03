@@ -20,7 +20,8 @@ trait SDDBuilder[N <: SDD]{
   def buildPartition(primes: Seq[N],subs: Seq[N]): N
   
   /**
-   * Decomposable conjunction. Arguments are in any order.
+   * Decomposable conjunction. 
+   * Arguments are in any order but are assumed to respect a lower vtree.
    */
   def buildDecomposition(x: N, y: N): N
   

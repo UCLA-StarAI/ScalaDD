@@ -28,7 +28,7 @@ trait Tractable {
   def modelRatio: BigRational
   
   def modelCount: BigInt = {
-    (modelRatio * (BigInt(2)^(numVariables))).toExactBigInt
+    (modelRatio * (BigInt(2).pow(numVariables))).toExactBigInt
   }
   
 }

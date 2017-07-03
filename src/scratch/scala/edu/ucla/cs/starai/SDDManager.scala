@@ -42,6 +42,7 @@ object SDDManagerScratch extends App {
   
   val cnf = c1 ∧ c2 && c3 && c4 && c5 && c6 && c7 && c8 && c9
   println(s"CNF size = ${cnf.sddSize}")
+  println(s"CNF model ratio = ${cnf.modelRatio}")
   println(s"CNF model count = ${cnf.modelCount}")
   
   val unsat = cnf && !c5

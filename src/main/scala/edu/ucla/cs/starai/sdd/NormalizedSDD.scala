@@ -4,7 +4,8 @@ import edu.ucla.cs.starai.logic.Circuit
 import edu.ucla.cs.starai.logic.VTreeLeaf
 import edu.ucla.cs.starai.logic.VTreeINode
 import edu.ucla.cs.starai.logic.VTree
-
+import org.scalatest.Assertions
+import scala.language.existentials
 
 trait Normalized extends SDD with Circuit[Normalized]
 

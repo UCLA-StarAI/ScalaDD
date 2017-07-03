@@ -16,7 +16,8 @@ trait Tree[+N <: Tree[N]] extends DAG[N] {
       propagate(self,children.map(_.foldUp(propagate)))
   } 
   
-  override def iterator: Iterator[N] = children.map(_.iterator).reduce(_ ++ _) ++ Iterator(this)
+  override def iterator: Iterator[N] = 
+    children.map(_.iterator).foldRight(Iterator(this))(_ ++ _)
   
 }
 

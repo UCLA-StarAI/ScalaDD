@@ -36,6 +36,9 @@ trait ComposableTerminal[N <: ComposableSDD[N]] extends TerminalNode with FastCo
     
   override def kind = Left(this)
   
+  override def assign(l: Literal): N  = 
+    throw new UnsupportedOperationException("Assignment method needs to be overwritten")
+  
 }
 
 trait ComposableTrueNode[N <: ComposableSDD[N]] extends TrueNode with FastComposable[N]{
@@ -76,17 +79,12 @@ trait ComposableLiteralNode[N <: ComposableSDD[N]] extends LiteralNode with Fast
   override def |(l: Literal): N = 
     if(this.literal == l) vtree.buildTrue
     else if(this.literal == !l) vtree.buildFalse
-    else (this.vtree lca l.variable).buildLiteral(this.literal)
+    else this
     
-  override def assign(l: Literal): N = 
-    if(this.literal == l) vtree.buildLiteral(this.literal)
+  override abstract def assign(l: Literal): N = 
+    if(this.literal == l) this
     else if(this.literal == !l) vtree.buildFalse
-    else {
-      val lca = (this.vtree lca l.variable)
-      val x = this.vtree.buildLiteral(this.literal)
-      val y = lca.nodeFor(l.variable).buildLiteral(l)
-      lca.buildDecomposition(x,y)
-    }
+    else super.assign(l)
     
   override def &&(that: N): N = (that assign literal)
       

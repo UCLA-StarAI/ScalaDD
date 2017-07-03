@@ -14,6 +14,11 @@ trait UniqueNodesCache[N <: SDD] {
   
   def getOrBuild(primes: Seq[N], subs: Seq[N], build: () => N): N
   
+  def register(primes: Seq[N], subs: Seq[N], v: N) = {
+    val registered = getOrBuild(primes, subs, () => v)
+    require(registered eq v)
+  }
+  
 }
 
 class GoogleWeakCache[N <: SDD] extends UniqueNodesCache[N] {

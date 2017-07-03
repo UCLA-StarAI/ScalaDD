@@ -2,7 +2,7 @@ package edu.ucla.cs.starai.sdd
 
 import scala.math.BigInt.int2bigInt
 import scala.collection.mutable
-
+import scala.language.existentials
 import edu.ucla.cs.starai.logic._
 import edu.ucla.cs.starai.logic
 import edu.ucla.cs.starai.util._
@@ -97,7 +97,7 @@ trait FalseNode extends SDD{
   
   final override def isValid = false
   
-  override def name = "false (${vtree.variables})"
+  override def name = s"false (${vtree.variables})"
 }
 
 
@@ -129,9 +129,6 @@ trait DecisionNode[+N <: SDD] extends SDD {
   
   override def vtree: VTreeINode[T] forSome { type T <: VTree[T] }
   
-  assume(primes.forall{_.subRespects(vtree.vl)},"decompositions follow the vtree")
-  assume(subs.forall{_.subRespects(vtree.vr)},"decompositions follow the vtree")
-  
   def kind = Right(this)
   
   def name = s"N$hashCode"
@@ -155,7 +152,9 @@ trait DecisionNode[+N <: SDD] extends SDD {
   def isValid = (BigRational(1) == (modelRatio: BigRational))
     
   def modelRatio(cache: Cache[BigRational]) = cache.getOrElse(this,{
-    elems.map(_.modelRatio(cache)).sum
+    val tmp = elems.map(_.modelRatio(cache))
+    require(tmp.sum.denom <= BigInt(2).pow(numVariables))
+    tmp.sum
   })
   
   /**
@@ -167,13 +166,17 @@ trait DecisionNode[+N <: SDD] extends SDD {
   def isPrimeTrimmable = (partitionSize == 1 && elems(0).prime.isValid)
   def isTrimmable = isPrimeTrimmable || isSubTrimmable
   
-  case class Element[+M >: N <: SDD](prime: M, sub: M) {
+  final case class Element[+M >: N <: SDD](prime: M, sub: M) {
     
     assume(prime.subRespects(vtree.vl), "XY-Partitions should respect the vtree: " + prime)
     assume(sub.subRespects(vtree.vr), "XY-Partitions should respect the vtree: " + sub)
             
     def isConsistent(cache: Cache[Boolean]) = prime.isConsistent(cache) && sub.isConsistent(cache)
-    def modelRatio(cache: Cache[BigRational]) = prime.modelRatio(cache) * sub.modelRatio(cache)
+    
+    def modelRatio(cache: Cache[BigRational]) = {
+      assume((prime.modelRatio(cache) * sub.modelRatio(cache)).denom <= BigInt(2).pow(numVariables))
+      prime.modelRatio(cache) * sub.modelRatio(cache)
+    }
   
     override def toString = s"[$prime,$sub]"
   

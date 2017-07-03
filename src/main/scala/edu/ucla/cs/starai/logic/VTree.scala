@@ -1,5 +1,6 @@
 package edu.ucla.cs.starai.logic
 
+import scala.language.existentials
 import edu.ucla.cs.starai.util._
 import edu.ucla.cs.starai.graph.Tree
 import edu.ucla.cs.starai.graph.DoubleLinkedTree
@@ -16,7 +17,10 @@ trait VTree[+N <: VTree[N]] extends DoubleLinkedTree[N] {
   def literals: Set[Literal] = variables.map(!_.toLiteral) union variables.map(_.toLiteral)
   def numVariables = variables.size
     
-  def lca(v: Variable): N = ancestors.find(_.contains(v)).get
+  def lca(v: Variable): N = {
+    if(variables.contains(v)) this
+    else ancestors.find(_.contains(v)).get
+  }
   
   /**
    * Assumes there exists an answer.
@@ -25,6 +29,8 @@ trait VTree[+N <: VTree[N]] extends DoubleLinkedTree[N] {
     case x: VTreeLeaf[_] => x.variable == v
     case _ => false
   }).get
+  
+  override def toString = s"VTree over ${variables.mkString(", ")}"
   
 }
 
@@ -67,7 +73,7 @@ trait VTreeINode[+N <: VTree[N]] extends VTree[N] {
   
   def kind = Right(this)
   
-  override val  variables = vl.variables union vr.variables
-  override val  children = Seq(vl,vr)
+  override val variables = vl.variables union vr.variables
+  override val children = Seq(vl,vr)
   
 }
