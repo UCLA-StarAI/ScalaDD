@@ -10,5 +10,8 @@ lazy val root = (project in file(".")).
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % Test,
     libraryDependencies += "com.google.guava" % "guava" % "12.0",
     EclipseKeys.withSource := true,
-    EclipseKeys.withJavadoc := true
+    EclipseKeys.withJavadoc := true,
+    organizationName := "Guy Van den Broeck <guyvdb@cs.ucla.edu>",
+	startYear := Some(java.time.Year.now().getValue),
+	licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt"))
   )
