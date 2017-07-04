@@ -28,7 +28,7 @@ trait SDDBuilder[N <: SDD]{
    * Builds a representation of the given SDD according to the conventions of this manager.
    * Use case: take an SDD for a sub-vtree and lift it to the vtree of this manager.
    */
-  def decorate(sdd: N): N
+  def normalize(sdd: N): N
   
   /**
    * Mutually exclusive and exhaustive primes with their subs

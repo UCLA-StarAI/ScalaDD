@@ -17,16 +17,26 @@
 package edu.ucla.cs.starai
 
 import java.util.concurrent.Callable
-
+import scala.collection._
+import scala.language.implicitConversions
+ 
 package object util {
 
   def assertFalse = assert(false);
+  
+  def time[R](block: => R): R = {
+    val t0 = System.nanoTime()
+    val result = block    // call-by-name
+    val t1 = System.nanoTime()
+    println("Elapsed time: " + (t1 - t0) + "ns")
+    result
+  }
    
   implicit def runnable(f: () => Unit): Runnable = new Runnable() { def run() = f() }
 
   implicit def callable[T](f: () => T): Callable[T] = new Callable[T]() { def call() = f() }
   
-  implicit class SetOps[T](val x: Set[T]) {
+  implicit final class SetOps[T](val x: Set[T]) {
   
     def overlaps(y: Set[T]): Boolean = {
      (x intersect y).nonEmpty
@@ -34,10 +44,22 @@ package object util {
     
   }
   
-  implicit class SeqOps[T](val x: Seq[T]) {
+  implicit final class SeqOps[T](val x: Seq[T]) {
   
-    def hasDistinctElements: Boolean =  x.toSet.size == x.size
+    @inline
+    def hasDistinctElements: Boolean = {
+      val seen = mutable.HashSet[T]()
+      for (e <- x) {
+        if (!seen(e)) {
+          seen += e
+        }else{
+          return false
+        }
+      }
+      return true
+    }
     
+    @inline
     def interleave(y: Seq[T]): Seq[T] = {
       x.zip(y) flatMap { case (a, b) => Seq(a, b) }
     }

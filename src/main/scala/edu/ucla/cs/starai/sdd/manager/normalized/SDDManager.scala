@@ -44,9 +44,10 @@ trait SDDManagerLeaf extends SDDManager with VTreeLeaf[SDDManager] {
   
   override def kind = Left(this)
   
-  private abstract class MyTerminal extends ManagedTerminal{
-    def vtree = SDDManagerLeaf.this
-  }
+  private abstract class MyTerminal extends {
+    val vtree = SDDManagerLeaf.this
+  } with  ManagedTerminal
+  
   private abstract class MyLiteral(val literal: Literal) extends MyTerminal
   
   val buildTrue: ManagedTerminal = new MyTerminal with ManagedTrue
@@ -69,7 +70,7 @@ trait SDDManagerLeaf extends SDDManager with VTreeLeaf[SDDManager] {
     throw new IllegalArgumentException(s"$this cannot build decompositions")
   }
   
-  def decorate(sdd: ManagedSDD): ManagedSDD = {
+  def normalize(sdd: ManagedSDD): ManagedSDD = {
     if(sdd.vtree == this) return sdd
     else throw new IllegalArgumentException(s"$this cannot build sdds for other managers")
   }
@@ -83,9 +84,9 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
   val uniqueNodesCache: UniqueNodesCache[ManagedSDD]
   
   private class MyDecision(val primes: Seq[ManagedSDD], val subs: Seq[ManagedSDD]) 
-    extends ManagedDecision {
-    def vtree = SDDManagerINode.this
-  }
+    extends {
+    val vtree = SDDManagerINode.this
+  } with ManagedDecision 
   
   private[this] val trimmablePrimes = Seq(vl.buildTrue)
   private[this] val trimmableSubs = Seq(vr.buildTrue,vr.buildFalse)
@@ -121,8 +122,8 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
        }).toMap
   
   def buildPartition(primes: Seq[ManagedSDD], subs: Seq[ManagedSDD]): ManagedSDD = {
-    val normalizedPrimes = primes.map(vl.decorate(_))
-    val normalizedSubs = subs.map(vr.decorate(_))
+    val normalizedPrimes = primes.map(vl.normalize(_))
+    val normalizedSubs = subs.map(vr.normalize(_))
     val compressed = normalizedSubs.hasDistinctElements
     val consistentPrimes = primes.forall(_.isConsistent)
     val (newPrimes,newSubs) = 
@@ -159,7 +160,7 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
     }
   }
   
-  def decorate(sdd: ManagedSDD): ManagedSDD = {
+  def normalize(sdd: ManagedSDD): ManagedSDD = {
     if(sdd.vtree == this) {
       return sdd
     } else if(!this.contains(sdd.vtree)){

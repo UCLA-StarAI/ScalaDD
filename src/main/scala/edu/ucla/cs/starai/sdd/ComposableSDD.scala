@@ -66,7 +66,7 @@ trait ComposableTrueNode[N <: ComposableSDD[N]] extends TrueNode with FastCompos
   override def |(l: Literal): N = (vtree lca l.variable).buildTrue
   override def assign(l: Literal): N = (vtree lca l.variable).buildLiteral(l)
   
-  override def &&(that: N): N = (this.vtree lca that.vtree).decorate(that)
+  override def &&(that: N): N = (this.vtree lca that.vtree).normalize(that)
   override def ||(that: N): N = (this.vtree lca that.vtree).buildTrue
   
 }
@@ -81,7 +81,7 @@ trait ComposableFalseNode[N <: ComposableSDD[N]] extends FalseNode with FastComp
   override def assign(l: Literal): N  = (vtree lca l.variable).buildFalse
   
   override def &&(that: N): N = (this.vtree lca that.vtree).buildFalse
-  override def ||(that: N): N = (this.vtree lca that.vtree).decorate(that)
+  override def ||(that: N): N = (this.vtree lca that.vtree).normalize(that)
   
 }
 
@@ -127,7 +127,7 @@ trait ComposableDecisionNode[N <: ComposableSDD[N]]
       vtree.buildPartition(primes.map(_|l), subs)
     }else if(vtree.vr contains l.variable) {
       vtree.buildPartition(primes, subs.map(_|l))
-    } else (vtree lca l.variable).decorate(this)
+    } else (vtree lca l.variable).normalize(this)
   
   def assign(l: Literal): N = 
     if(vtree.vl contains l.variable) {

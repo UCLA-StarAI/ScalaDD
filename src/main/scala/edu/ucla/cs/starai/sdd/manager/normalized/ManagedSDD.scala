@@ -38,6 +38,12 @@ trait ManagedSDD extends Circuit[ManagedSDD]
   
   def vtree: SDDManager
   
+    // this seems to speed things up slightly for no reason
+  final override def equals(that: Any): Boolean = (that.asInstanceOf[AnyRef] eq this)
+  
+  // gets called thousands of times
+  final override def hashCode = System.identityHashCode(this);
+  
 }
 
 trait ManagedDecision extends ManagedSDD

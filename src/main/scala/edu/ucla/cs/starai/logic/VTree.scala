@@ -27,7 +27,7 @@ trait VTree[+N <: VTree[N]] extends DoubleLinkedTree[N] {
   self: N =>
  
   def kind: Either[VTreeLeaf[N],VTreeINode[N]]
-    
+  
   def contains(v: Variable): Boolean = variables.contains(v)
   def variables: Set[Variable]
   def literals: Set[Literal] = variables.map(!_.toLiteral) union variables.map(_.toLiteral)
@@ -76,6 +76,7 @@ trait VTreeLeaf[+N <: VTree[N]] extends VTree[N] {
   def variables: Set[Variable] = Set(variable)
   override def numVariables = 1
   
+  override def contains[U >: N](that: U) = (that == this)
   
 }
 
@@ -91,5 +92,8 @@ trait VTreeINode[+N <: VTree[N]] extends VTree[N] {
   
   override val variables = vl.variables union vr.variables
   override val children = Seq(vl,vr)
+  
+  private[this] val containsCache: Set[Any] = iterator.toSet
+  override def contains[U >: N](that: U) = containsCache.contains(that)
   
 }

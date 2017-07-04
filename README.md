@@ -7,4 +7,4 @@ This code is not ready to be used, for any purpose.
 
 To set up an Eclipse environment, run `sbt eclipse`.
 
-To update the license head, run `compile:headerCreate` and `test:headerCreate`
+To update the license header, run `compile:headerCreate` and `test:headerCreate`

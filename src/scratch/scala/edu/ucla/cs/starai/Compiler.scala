@@ -21,17 +21,21 @@ import edu.ucla.cs.starai.logic.io.VTreeParser
 import edu.ucla.cs.starai.logic.DimacsIO
 import scala.io.Source
 import edu.ucla.cs.starai.sdd.compiler.TreeCompiler
+import edu.ucla.cs.starai.util._
 
 object CompilerScratch extends App {
     
+  assertFalse
+  
   val parser = new VTreeParser(1)
   
 //  val cnf = DimacsIO.parse("examples/s208.1.scan.cnf")
   
-//  val cnf = DimacsIO.parse("examples/count.cnf")
+  val cnf = DimacsIO.parse("examples/count.cnf")
+  
 //  val vtree = parser.parse(new File("examples/count.cnf.vtree"))
     
-  val cnf = DimacsIO.parse(Source.fromResource("cnfs/count-short.cnf"))
+//  val cnf = DimacsIO.parse(Source.fromResource("cnfs/count-short.cnf"))
 //  val cnf = DimacsIO.parse(Source.fromResource("cnfs/count-shorter.cnf"))
   val vtree = parser.parse(Source.fromResource("cnfs/count.vtree"))
   

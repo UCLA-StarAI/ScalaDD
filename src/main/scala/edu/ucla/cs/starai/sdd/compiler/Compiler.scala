@@ -94,7 +94,7 @@ class TreeCompiler extends Compiler {
       }
     }
     // decorate output in case one expects a normalized SDD for the root
-    mgr.decorate(mgr.foldUp(propagate))
+    mgr.normalize(mgr.foldUp(propagate))
   }
   
 }

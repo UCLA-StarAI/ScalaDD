@@ -17,6 +17,7 @@
 package edu.ucla.cs.starai.util
 
 import java.util.concurrent.Callable
+import scala.language.implicitConversions
 
 object Conversions {
 
