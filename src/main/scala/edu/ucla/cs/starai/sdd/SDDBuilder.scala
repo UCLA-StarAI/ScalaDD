@@ -31,22 +31,22 @@ trait SDDBuilder[N <: SDD]{
   def normalize(sdd: N): N
   
   /**
-   * Mutually exclusive and exhaustive primes with their subs
+   * Consistent, mutually exclusive and exhaustive primes with their subs
    */
-  def buildPartition(primes: Seq[N],subs: Seq[N]): N
+  def partition(primes: Seq[N],subs: Seq[N]): N
   
   /**
    * Decomposable conjunction. 
    * Arguments are in any order but are assumed to respect a lower vtree.
    */
-  def buildDecomposition(x: N, y: N): N
+  def indepConjoin(x: N, y: N): N
   
   /**
    * Requires that l.variable is in vtree
    */
-  def buildLiteral(l: Literal): N
-  def buildFalse(): N
-  def buildTrue(): N
+  def literal(l: Literal): N
+  def False(): N
+  def True(): N
   
 }
 

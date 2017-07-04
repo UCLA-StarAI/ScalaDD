@@ -33,7 +33,7 @@ trait Compiler {
   def compile(cnf: DimacsCNF, mgr: SDDManager): ManagedSDD
   
   def compileClause(clause: Clause, mgr: SDDManager): ManagedSDD = {
-    clause.literals.foldLeft(mgr.buildFalse){(c,l) => c || mgr.buildLiteral(l)}
+    clause.literals.foldLeft(mgr.False){(c,l) => c || mgr.literal(l)}
   }
   
 }
@@ -45,7 +45,7 @@ class NaiveCompiler extends Compiler {
     // do this in a way that allows for garbage collection
     val numClauses = cnf.numClauses
     var i = 0;
-    var cnfSDD: ManagedSDD = mgr.buildTrue
+    var cnfSDD: ManagedSDD = mgr.True
     for(clause <- cnf.clauseLines){
       i = i+1
       println(s"(${(i*100)/numClauses}%, size ${cnfSDD.sddSize}) Compiling clause $clause ")
@@ -72,7 +72,7 @@ class TreeCompiler extends Compiler {
     }  
     
     def propagate(node: SDDManager, childCnfs: Seq[ManagedSDD]): ManagedSDD = node.kind match{
-      case Left(leaf) => removeRelevantClauses(leaf).foldLeft[ManagedSDD](leaf.buildTrue){
+      case Left(leaf) => removeRelevantClauses(leaf).foldLeft[ManagedSDD](leaf.True){
         (cnf,cl) => 
           i = i+1
           println(s"(${(i*100)/numClauses}%, size ${cnf.sddSize}) Compiling clause $cl ")
@@ -83,7 +83,7 @@ class TreeCompiler extends Compiler {
         val cnfX = childCnfs(0)
         val cnfY = childCnfs(1)
         println(s"(${(i*100)/numClauses}%, size ${cnfX.sddSize},${cnfY.sddSize}) Compiling aggregate CNF ")
-        val cnfXY = inode.buildDecomposition(cnfX,cnfY)
+        val cnfXY = inode.indepConjoin(cnfX,cnfY)
         val myCnf = removeRelevantClauses(inode).foldLeft[ManagedSDD](cnfXY){
           (cnf,cl) => 
             i = i+1

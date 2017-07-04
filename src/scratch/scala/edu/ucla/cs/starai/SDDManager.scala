@@ -28,17 +28,17 @@ object SDDManagerScratch extends App {
   
   val mgr = SDDManager(vtree)
   
-  println(s"False size = ${mgr.buildFalse.sddSize}")
-  println(s"False model count = ${mgr.buildFalse.modelCount}")
+  println(s"False size = ${mgr.False.sddSize}")
+  println(s"False model count = ${mgr.False.modelCount}")
   
-  val x1 = mgr.buildLiteral(1)
-  val x2 = mgr.buildLiteral(2)
-  val x3 = mgr.buildLiteral(3)
-  val x4 = mgr.buildLiteral(4)
-  val x5 = mgr.buildLiteral(5)
-  val x6 = mgr.buildLiteral(6)
-  val x7 = mgr.buildLiteral(7)
-  val x8 = mgr.buildLiteral(8)
+  val x1 = mgr.literal(1)
+  val x2 = mgr.literal(2)
+  val x3 = mgr.literal(3)
+  val x4 = mgr.literal(4)
+  val x5 = mgr.literal(5)
+  val x6 = mgr.literal(6)
+  val x7 = mgr.literal(7)
+  val x8 = mgr.literal(8)
   
   val c1 = !x1 ∨ x2 || !x5
   println(s"Clause 1 size = ${c1.sddSize}")

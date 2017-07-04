@@ -70,14 +70,15 @@ trait ComposableCircuit[N <: ComposableCircuit[N]] extends Circuit[N] {
   def assign(l: Literal): N
   
   // Any output will always respect the LCA of the operand vtrees
-  def &&(other: N): N
-  def ||(other: N): N
+  // one of these needs to be overridden to implement both
+  def &&(that: N): N = !(!this || !that)
+  def ||(that: N): N = !(!this && !that)
   
   // derived operators
   def forget(v: Variable) = ((this | v) || (this | !v))
   final def unary_¬() = unary_!()
-  final def ∧(other: N) = &&(other)
-  final def ∨(other: N) = ||(other)
+  final def ∧(that: N) = &&(that)
+  final def ∨(that: N) = ||(that)
   
   //TODO add specialized "conjoin with clause" to speed up CNF compilation
   

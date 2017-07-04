@@ -62,12 +62,12 @@ trait ComposableTrueNode[N <: ComposableSDD[N]] extends TrueNode with FastCompos
   self: N =>
     
   // needs to use override everywhere to allow mixing of traits
-  override def unary_!(): N = vtree.buildFalse
-  override def |(l: Literal): N = (vtree lca l.variable).buildTrue
-  override def assign(l: Literal): N = (vtree lca l.variable).buildLiteral(l)
+  override def unary_!(): N = vtree.False
+  override def |(l: Literal): N = (vtree lca l.variable).True
+  override def assign(l: Literal): N = (vtree lca l.variable).literal(l)
   
   override def &&(that: N): N = (this.vtree lca that.vtree).normalize(that)
-  override def ||(that: N): N = (this.vtree lca that.vtree).buildTrue
+  override def ||(that: N): N = (this.vtree lca that.vtree).True
   
 }
 
@@ -76,11 +76,11 @@ trait ComposableFalseNode[N <: ComposableSDD[N]] extends FalseNode with FastComp
   
   self: N =>
     
-  override def unary_!(): N = vtree.buildTrue
-  override def |(l: Literal): N = (vtree lca l.variable).buildFalse
-  override def assign(l: Literal): N  = (vtree lca l.variable).buildFalse
+  override def unary_!(): N = vtree.True
+  override def |(l: Literal): N = (vtree lca l.variable).False
+  override def assign(l: Literal): N  = (vtree lca l.variable).False
   
-  override def &&(that: N): N = (this.vtree lca that.vtree).buildFalse
+  override def &&(that: N): N = (this.vtree lca that.vtree).False
   override def ||(that: N): N = (this.vtree lca that.vtree).normalize(that)
   
 }
@@ -90,16 +90,16 @@ trait ComposableLiteralNode[N <: ComposableSDD[N]] extends LiteralNode with Fast
   
   self: N =>
     
-  override def unary_!(): N = vtree.buildLiteral(!literal)
+  override def unary_!(): N = vtree.literal(!literal)
   
   override def |(l: Literal): N = 
-    if(this.literal == l) vtree.buildTrue
-    else if(this.literal == !l) vtree.buildFalse
+    if(this.literal == l) vtree.True
+    else if(this.literal == !l) vtree.False
     else this
     
   override abstract def assign(l: Literal): N = 
     if(this.literal == l) this
-    else if(this.literal == !l) vtree.buildFalse
+    else if(this.literal == !l) vtree.False
     else super.assign(l)
     
   override def &&(that: N): N = (that assign literal)
@@ -108,8 +108,7 @@ trait ComposableLiteralNode[N <: ComposableSDD[N]] extends LiteralNode with Fast
   
 }
 
-trait ComposableDecisionNode[N <: ComposableSDD[N]] 
-  extends DecisionNode[N] with ComposableSDD[N]{
+trait ComposableDecisionNode[N <: ComposableSDD[N]] extends DecisionNode[N] with ComposableSDD[N] {
   
   self: N =>
     
@@ -117,64 +116,67 @@ trait ComposableDecisionNode[N <: ComposableSDD[N]]
     
   override def kind = Right(this)
   
-  def falseSub = vtree.vr.buildFalse
-  def trueSub = vtree.vr.buildTrue
+  def falseSub = vtree.vr.False
+  def trueSub = vtree.vr.True
 
-  def unary_!(): N = vtree.buildPartition(primes, subs.map(!_))
+  def unary_!(): N = vtree.partition(primes, subs.map(!_))
 
   def |(l: Literal): N = 
-    if(vtree.vl contains l.variable) {
-      vtree.buildPartition(primes.map(_|l), subs)
-    }else if(vtree.vr contains l.variable) {
-      vtree.buildPartition(primes, subs.map(_|l))
-    } else (vtree lca l.variable).normalize(this)
+    if(vtree.vl contains l.variable) conditionLeft(l)
+    else if(vtree.vr contains l.variable) conditionRight(l)
+    else (vtree lca l.variable).normalize(this)
   
+  @inline protected def conditionLeft(l: Literal) = vtree.partition(primes.map(_|l), subs)
+  @inline protected def conditionRight(l: Literal) =  vtree.partition(primes, subs.map(_|l))
+    
   def assign(l: Literal): N = 
-    if(vtree.vl contains l.variable) {
-      val lNode = vtree.vl.buildLiteral(l)
-      vtree.buildPartition(!lNode +: primes.map(_ assign l), falseSub +: subs)
-    }else if(vtree.vr contains l.variable) {
-      vtree.buildPartition(primes, subs.map(_ assign l))
-    } else {
+    if(vtree.vl contains l.variable) assignLeft(l)
+    else if(vtree.vr contains l.variable) assignRight(l)
+    else {
       val lca = (this.vtree lca l.variable)
-      val y = lca.nodeFor(l.variable).buildLiteral(l)
-      lca.buildDecomposition(this,y)
+      val y = lca.nodeFor(l.variable).literal(l)
+      lca.indepConjoin(this,y)
     }
+
+  @inline protected def assignRight(l: Literal) =  vtree.partition(primes, subs.map(_ assign l))
+
+  @inline
+  protected def assignLeft(l: Literal) = {
+    val lNode = vtree.vl.literal(l)
+    vtree.partition(!lNode +: primes.map(_ assign l), falseSub +: subs)
+  }
 
   /**
    * If FastComposable, dispatch to other
    */
   // TODO optimize for decompositions of size 1 and 2
-  def &&(that: N): N = that.kind match{
+  override def &&(that: N): N = that.kind match{
     case Left(terminal) => terminal && this
     case Right(decision: FastComposable[N]) => decision && this
     case Right(decision) => this conjoinDecision decision
   }
   
-  private[this] def conjoinDecision(that: ComposableDecisionNode[N] with N): N = {
+  protected def conjoinDecision(that: ComposableDecisionNode[N] with N): N = {
     if(this.vtree == that.vtree){
        val newPrimes = for(x <- this.primes; y <- that.primes) yield (x && y)
        val newSubs = for(x <- this.subs; y <- that.subs) yield (x && y)
-       vtree.buildPartition(newPrimes, newSubs)
+       vtree.partition(newPrimes, newSubs)
     }
     else if(this.vtree contains that.vtree) this.conjoinBelow(that)
     else if(that.vtree contains this.vtree) that.conjoinBelow(this)
-    else (this.vtree lca that.vtree).buildDecomposition(this,that)
+    else (this.vtree lca that.vtree).indepConjoin(this,that)
   }
 
   /**
    * Conjoin with an argument that respects a vtree node strictly below this node's vtree
    */
-  private def conjoinBelow(that: ComposableDecisionNode[N] with N): N = {
+  protected def conjoinBelow(that: ComposableDecisionNode[N] with N): N = {
     assume(this.vtree contains that.vtree)
     if(this.vtree.vl contains that.vtree){
-       this.vtree.buildPartition(!that +: this.primes.map(_ && that), this.falseSub +: this.subs)
+       this.vtree.partition(!that +: this.primes.map(_ && that), this.falseSub +: this.subs)
     }else{
-       this.vtree.buildPartition(this.primes, this.subs.map(_ && that))
+       this.vtree.partition(this.primes, this.subs.map(_ && that))
     }
   }
-  
-  def ||(that: N): N = !(!this && !that)
-  
 }
 

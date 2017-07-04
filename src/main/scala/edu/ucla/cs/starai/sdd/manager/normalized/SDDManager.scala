@@ -50,23 +50,23 @@ trait SDDManagerLeaf extends SDDManager with VTreeLeaf[SDDManager] {
   
   private abstract class MyLiteral(val literal: Literal) extends MyTerminal
   
-  val buildTrue: ManagedTerminal = new MyTerminal with ManagedTrue
-  val buildFalse: ManagedTerminal = new MyTerminal with ManagedFalse
+  val True: ManagedTerminal = new MyTerminal with ManagedTrue
+  val False: ManagedTerminal = new MyTerminal with ManagedFalse
   val posLit: ManagedTerminal = new MyLiteral(variable) with ManagedLiteral
   val negLit: ManagedTerminal = new MyLiteral(!variable) with ManagedLiteral
   
-  def buildLiteral(l: Literal) = {
+  def literal(l: Literal) = {
      if(this.variable == l.variable) {
        if(l.isPositive) posLit
        else negLit
      }else throw new IllegalArgumentException(s"$this cannot build literal $l, only for $variable")
   }
   
-  def buildPartition(primes: Seq[ManagedSDD],subs: Seq[ManagedSDD]): ManagedDecision = {
+  def partition(primes: Seq[ManagedSDD],subs: Seq[ManagedSDD]): ManagedDecision = {
     throw new IllegalArgumentException(s"$this cannot build partitions")
   }
   
-  def buildDecomposition(x: ManagedSDD, y: ManagedSDD): ManagedDecision = {
+  def indepConjoin(x: ManagedSDD, y: ManagedSDD): ManagedDecision = {
     throw new IllegalArgumentException(s"$this cannot build decompositions")
   }
   
@@ -88,24 +88,24 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
     val vtree = SDDManagerINode.this
   } with ManagedDecision 
   
-  private[this] val trimmablePrimes = Seq(vl.buildTrue)
-  private[this] val trimmableSubs = Seq(vr.buildTrue,vr.buildFalse)
+  private[this] val trimmablePrimes = Seq(vl.True)
+  private[this] val trimmableSubs = Seq(vr.True,vr.False)
   
-  val buildTrue: ManagedDecision with ManagedTrue = 
-    new MyDecision(trimmablePrimes,Seq(vr.buildTrue)) 
+  val True: ManagedDecision with ManagedTrue = 
+    new MyDecision(trimmablePrimes,Seq(vr.True)) 
       with ManagedTrue with CachedNegation
-  uniqueNodesCache.register(buildTrue.primes, buildTrue.subs, buildTrue)
+  uniqueNodesCache.register(True.primes, True.subs, True)
       
-  val buildFalse: ManagedDecision with ManagedFalse = 
-    new MyDecision(trimmablePrimes,Seq(vr.buildFalse)) 
+  val False: ManagedDecision with ManagedFalse = 
+    new MyDecision(trimmablePrimes,Seq(vr.False)) 
       with ManagedFalse with CachedNegation
-  uniqueNodesCache.register(buildFalse.primes, buildFalse.subs, buildFalse)
+  uniqueNodesCache.register(False.primes, False.subs, False)
       
-  override def buildLiteral(l: Literal) = literalCache(l)
+  override def literal(l: Literal) = literalCache(l)
       
   protected val literalCache: Map[Literal,ManagedSDD] = (
        vl.literals.map{ l => 
-         val primes = Seq(vl.buildLiteral(l),!vl.buildLiteral(l))
+         val primes = Seq(vl.literal(l),!vl.literal(l))
          (l-> uniqueNodesCache.getOrBuild(primes, trimmableSubs,
            () => new MyDecision(primes,trimmableSubs) 
                    with ManagedLiteral with CachedNegation {
@@ -113,7 +113,7 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
            }))
        } ++ 
        vr.literals.map{ l => 
-         val subs = Seq(vr.buildLiteral(l))
+         val subs = Seq(vr.literal(l))
          (l->uniqueNodesCache.getOrBuild(trimmablePrimes, subs,
            () => new MyDecision(trimmablePrimes,subs) 
                    with ManagedLiteral with CachedNegation {
@@ -121,7 +121,7 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
            }))
        }).toMap
   
-  def buildPartition(primes: Seq[ManagedSDD], subs: Seq[ManagedSDD]): ManagedSDD = {
+  def partition(primes: Seq[ManagedSDD], subs: Seq[ManagedSDD]): ManagedSDD = {
     val normalizedPrimes = primes.map(vl.normalize(_))
     val normalizedSubs = subs.map(vr.normalize(_))
     val compressed = normalizedSubs.hasDistinctElements
@@ -142,7 +142,7 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
        new MyDecision(newPrimes,newSubs))
   }
   
-  def buildDecomposition(x: ManagedSDD, y: ManagedSDD): ManagedSDD = {
+  def indepConjoin(x: ManagedSDD, y: ManagedSDD): ManagedSDD = {
     assume(x.vtree!=this)
     assume(y.vtree!=this)
     assume(this.contains(x.vtree))
@@ -150,13 +150,13 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
     val xleft = vl.contains(x.vtree) 
     val yleft = vl.contains(y.vtree) 
     if(xleft && !yleft){
-      buildPartition(Seq(x,!x),Seq(y,vr.buildFalse))
+      partition(Seq(x,!x),Seq(y,vr.False))
     }else if(!xleft && yleft){
-      buildPartition(Seq(y,!y),Seq(x,vr.buildFalse))
+      partition(Seq(y,!y),Seq(x,vr.False))
     }else if(xleft && yleft){
-      decorateLeft(vl.buildDecomposition(x, y))
+      decorateLeft(vl.indepConjoin(x, y))
     }else{
-      decorateRight(vr.buildDecomposition(x, y))
+      decorateRight(vr.indepConjoin(x, y))
     }
   }
   
@@ -173,8 +173,8 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
     }
   }
   
-  def decorateLeft(sdd: ManagedSDD) = buildPartition(Seq(sdd,!sdd),trimmableSubs)
+  def decorateLeft(sdd: ManagedSDD) = partition(Seq(sdd,!sdd),trimmableSubs)
   
-  def decorateRight(sdd: ManagedSDD) = buildPartition(trimmablePrimes,Seq(sdd))
+  def decorateRight(sdd: ManagedSDD) = partition(trimmablePrimes,Seq(sdd))
   
 }

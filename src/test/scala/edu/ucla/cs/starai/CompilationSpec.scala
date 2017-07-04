@@ -34,21 +34,21 @@ class CompilationSpec extends FlatSpec with SDDBehaviors {
   val mgr = SDDManager(vtree)
   
   behavior of "A buildFalse SDD"
-  it should behave like correctSize(mgr.buildFalse,7)
-  it should behave like correctModelCount(mgr.buildFalse,0)
+  it should behave like correctSize(mgr.False,7)
+  it should behave like correctModelCount(mgr.False,0)
   
   behavior of "A buildTrue SDD"
-  it should behave like correctSize(mgr.buildTrue,7)
-  it should behave like correctModelCount(mgr.buildTrue,scala.math.pow(2,8).toInt)
+  it should behave like correctSize(mgr.True,7)
+  it should behave like correctModelCount(mgr.True,scala.math.pow(2,8).toInt)
   
-  val x1 = mgr.buildLiteral(1)
-  val x2 = mgr.buildLiteral(2)
-  val x3 = mgr.buildLiteral(3)
-  val x4 = mgr.buildLiteral(4)
-  val x5 = mgr.buildLiteral(5)
-  val x6 = mgr.buildLiteral(6)
-  val x7 = mgr.buildLiteral(7)
-  val x8 = mgr.buildLiteral(8)
+  val x1 = mgr.literal(1)
+  val x2 = mgr.literal(2)
+  val x3 = mgr.literal(3)
+  val x4 = mgr.literal(4)
+  val x5 = mgr.literal(5)
+  val x6 = mgr.literal(6)
+  val x7 = mgr.literal(7)
+  val x8 = mgr.literal(8)
   
   behavior of "A clause"
   val c1 = !x1 ||  x2 || !x5
