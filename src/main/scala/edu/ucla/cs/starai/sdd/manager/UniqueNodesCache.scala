@@ -47,10 +47,6 @@ class GoogleWeakCache[N <: SDD] extends UniqueNodesCache[N] {
       this((primes zip subs).toSet)
     }
     
-    elems.equals(null)
-    
-    
-    
   }
   
   private[this] val cache: Cache[Key,N] = CacheBuilder

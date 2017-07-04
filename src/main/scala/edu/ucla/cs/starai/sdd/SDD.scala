@@ -168,9 +168,7 @@ trait DecisionNode[+N <: SDD] extends SDD {
   def isValid = (BigRational(1) == (modelRatio: BigRational))
     
   def modelRatio(cache: Cache[BigRational]) = cache.getOrElse(this,{
-    val tmp = elems.map(_.modelRatio(cache))
-    require(tmp.sum.denom <= BigInt(2).pow(numVariables))
-    tmp.sum
+    elems.map(_.modelRatio(cache)).sum
   })
   
   /**
@@ -189,10 +187,7 @@ trait DecisionNode[+N <: SDD] extends SDD {
             
     def isConsistent(cache: Cache[Boolean]) = prime.isConsistent(cache) && sub.isConsistent(cache)
     
-    def modelRatio(cache: Cache[BigRational]) = {
-      assume((prime.modelRatio(cache) * sub.modelRatio(cache)).denom <= BigInt(2).pow(numVariables))
-      prime.modelRatio(cache) * sub.modelRatio(cache)
-    }
+    def modelRatio(cache: Cache[BigRational]) = prime.modelRatio(cache) * sub.modelRatio(cache)
   
     override def toString = s"[$prime,$sub]"
   
