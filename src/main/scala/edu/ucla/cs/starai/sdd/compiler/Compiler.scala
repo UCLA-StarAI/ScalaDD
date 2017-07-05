@@ -28,7 +28,7 @@ trait Compiler {
   
   def compile(cnf: DimacsCNF): ManagedSDD = compile(cnf,VTree.balanced(cnf.numVars))
   
-  def compile(cnf: DimacsCNF, vtree: VTree.SomeVtree): ManagedSDD = compile(cnf,SDDManager(vtree))
+  def compile(cnf: DimacsCNF, vtree: VTree.Some): ManagedSDD = compile(cnf,SDDManager(vtree))
   
   def compile(cnf: DimacsCNF, mgr: SDDManager): ManagedSDD
   

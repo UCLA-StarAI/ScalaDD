@@ -28,7 +28,7 @@ abstract class SDDManagerImpl extends SDDManager with Child[SDDManagerImpl]{
 
 object SDDManagerImpl{
   
-  def apply(vtree: VTree.SomeVtree): SDDManagerImpl = vtree.kind match{
+  def apply(vtree: VTree.Some): SDDManagerImpl = vtree.kind match{
     case Left(leaf) => new SDDManagerLeafImpl(leaf.variable)
     case Right(inode) => new SDDManagerINodeImpl(
       SDDManagerImpl(inode.vl), SDDManagerImpl(inode.vr)
@@ -44,7 +44,9 @@ class SDDManagerLeafImpl(_variable: Variable)
 }
 
 class SDDManagerINodeImpl(val vl: SDDManagerImpl, val vr: SDDManagerImpl) extends {
-    val uniqueNodesCache: UniqueNodesCache[ManagedSDD] = new GoogleWeakCache
+  
+    val uniqueNodesCache = new GoogleWeakCache[ManagedSDD]
+    
   } with SDDManagerImpl with SDDManagerINode {
   
   vl.setParent(this)

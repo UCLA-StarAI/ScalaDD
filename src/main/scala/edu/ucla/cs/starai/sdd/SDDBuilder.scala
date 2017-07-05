@@ -33,7 +33,7 @@ trait SDDBuilder[N <: SDD]{
   /**
    * Consistent, mutually exclusive and exhaustive primes with their subs
    */
-  def partition(primes: Seq[N],subs: Seq[N]): N
+  def partition(decomp: XYDecomposition[N]): N
   
   /**
    * Decomposable conjunction. 

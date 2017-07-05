@@ -16,17 +16,17 @@
 
 package edu.ucla.cs.starai.sdd
 
-import scala.math.BigInt.int2bigInt
-import scala.collection.mutable
-import scala.language.existentials
-import edu.ucla.cs.starai.logic._
+import edu.ucla.cs.starai.graph.DAG
 import edu.ucla.cs.starai.logic
+import edu.ucla.cs.starai.logic._
 import edu.ucla.cs.starai.util._
+import scala.language.existentials
+import scala.math.BigInt.int2bigInt
 
 
 trait SDD extends Circuit[SDD] with Tractable {
     
-  def vtree: VTree.SomeVtree // silly that these bounds need to be repeated
+  def vtree: VTree.Some // silly that these bounds need to be repeated
     
   def respects(vtree: VTree[_]) = (vtree == this.vtree)
   def subRespects(vtree: VTree[_]) = (vtree.contains(this.vtree))
@@ -96,7 +96,7 @@ trait TrueNode extends SDD{
   
   final override def isValid = true
   
-  override def name = s"true (${vtree.variables})"
+  override def name = s"true[${vtree.variables.mkString(",")}]"
 }
 
 
@@ -113,7 +113,8 @@ trait FalseNode extends SDD{
   
   final override def isValid = false
   
-  override def name = s"false (${vtree.variables})"
+  override def name = s"false[${vtree.variables.mkString(",")}]"
+  
 }
 
 
@@ -145,53 +146,83 @@ trait DecisionNode[+N <: SDD] extends SDD {
   
   override def vtree: VTreeINode[T] forSome { type T <: VTree[T] }
   
+  def decomp: XYDecomposition[N]
+  
+  assumes(decomp.elements, (_:Element[N]).subRespects(vtree))
+  
   def kind = Right(this)
   
   def name = s"N$hashCode"
   
-  def primes: Seq[N]
-  def subs: Seq[N]
-  
-  def elems: Seq[Element[N]] = (primes zip subs).map{case (p,s) => Element(p,s)}
-  
-  def children: Seq[N] = (primes interleave subs)
-  
-  def partitionSize = elems.size
+  def primes: Iterable[N] = decomp.primes
+  def subs: Iterable[N] = decomp.subs
+  def children: Seq[N] = decomp.children
+  def partitionSize = decomp.size
   
   override def usedVars(cache: Cache[Set[Variable]]) = cache.getOrElseUpdate(this, {
     val usedDecendents = if(isPrimeTrimmable) subs else if(isSubTrimmable) primes else children
     usedDecendents.map(_.usedVars(cache)).reduce(_ union _)
   })
   
-  def isConsistent(cache: Cache[Boolean]) = elems.exists(_.isConsistent(cache))
+  def isConsistent(cache: Cache[Boolean]) = decomp.isConsistent(cache)
   
+  //TODO provide specialized implementation
   def isValid = (BigRational(1) == (modelRatio: BigRational))
     
-  def modelRatio(cache: Cache[BigRational]) = cache.getOrElse(this,{
-    elems.map(_.modelRatio(cache)).sum
-  })
+  def modelRatio(cache: Cache[BigRational]) = cache.getOrElse(this,decomp.modelRatio(cache))
   
   /**
    * Define what types of trimming are possible on this node        
    */
-  def isSubTrimmableFirst = (partitionSize == 2 && elems(0).sub.isValid && !elems(1).sub.isConsistent)
-  def isSubTrimmableSecond = (partitionSize == 2 && elems(1).sub.isValid && !elems(0).sub.isConsistent)
-  def isSubTrimmable = (isSubTrimmableFirst || isSubTrimmableSecond)
-  def isPrimeTrimmable = (partitionSize == 1 && elems(0).prime.isValid)
-  def isTrimmable = isPrimeTrimmable || isSubTrimmable
-  
-  final case class Element[+M >: N <: SDD](prime: M, sub: M) {
-    
-    assume(prime.subRespects(vtree.vl), "XY-Partitions should respect the vtree: " + prime)
-    assume(sub.subRespects(vtree.vr), "XY-Partitions should respect the vtree: " + sub)
-            
-    def isConsistent(cache: Cache[Boolean]) = prime.isConsistent(cache) && sub.isConsistent(cache)
-    
-    def modelRatio(cache: Cache[BigRational]) = prime.modelRatio(cache) * sub.modelRatio(cache)
-  
-    override def toString = s"[$prime,$sub]"
-  
-  }
+  def isSubTrimmable = decomp.isSubTrimmable
+  def isPrimeTrimmable = decomp.isPrimeTrimmable
+  def isTrimmable = decomp.isTrimmable
   
 }
 
+
+trait XYDecomposition[+N <: SDD] extends Caching[DAG[_]]{
+  
+  def elements: Seq[Element[N]]    
+  
+  def children: Seq[N] = elements.flatMap(_.children)
+  def primes: Seq[N] = elements.map(_.prime)
+  def subs: Seq[N] = elements.map(_.sub)
+  
+  def size = elements.size
+          
+  def isConsistent(cache: Cache[Boolean]) = elements.exists(_.isConsistent(cache))
+  
+  def isSubTrimmableFirst = (size == 2 && elements(0).sub.isValid && !elements(1).sub.isConsistent)
+  def isSubTrimmableSecond = (size == 2 && elements(1).sub.isValid && !elements(0).sub.isConsistent)
+  def isSubTrimmable = (isSubTrimmableFirst || isSubTrimmableSecond)
+  def isPrimeTrimmable = (size == 1 && elements(0).prime.isValid)
+  def isTrimmable = isPrimeTrimmable || isSubTrimmable
+  
+  def modelRatio(cache: Cache[BigRational]) = elements.map(_.modelRatio(cache)).sum
+
+  override def toString = elements.mkString("XY{", ", ", "}")
+  
+}
+
+
+trait Element[+N <: SDD] extends Caching[DAG[_]] {
+  
+  def prime: N 
+  def sub: N
+  
+  assume(prime.isConsistent)
+  
+  def isConsistent: Boolean = isConsistent(emptyCache)
+  def isConsistent(cache: Cache[Boolean]): Boolean = 
+    prime.isConsistent(cache) && sub.isConsistent(cache)
+  
+  def modelRatio(cache: Cache[BigRational]) = prime.modelRatio(cache) * sub.modelRatio(cache)
+  
+  def subRespects(vtree: VTreeINode.Some ): Boolean = prime.subRespects(vtree.vl) && sub.subRespects(vtree.vr)
+  
+  def children: Seq[N] = Seq(prime,sub)
+
+  override def toString = s"[$prime,$sub]"
+
+}

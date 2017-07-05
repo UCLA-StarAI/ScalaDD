@@ -24,9 +24,7 @@ import scala.collection.mutable
  * Avoids boilerplate related to typing the self class in the map.
  */
 trait Caching[T]{
- 
- self: T =>
-  
+   
  type Cache[O] = mutable.Map[T,O]
  type Cache1[I,O] = mutable.Map[(T,I),O]
  

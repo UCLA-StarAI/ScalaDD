@@ -17,11 +17,23 @@
 package edu.ucla.cs.starai
 
 import java.util.concurrent.Callable
+import scala.annotation.elidable._
 import scala.collection._
 import scala.language.implicitConversions
+import scala.annotation.elidable
  
 package object util {
 
+  @elidable(ASSERTION) @inline
+  def assumes[T](collection: Traversable[T], assumption: T => Boolean, message: T => Any) {
+   for(x <- collection) assume(assumption(x),message(x)) 
+  }
+  
+  @elidable(ASSERTION) @inline
+  def assumes[T](collection: Traversable[T], assumption: T => Boolean) {
+   assumes(collection,assumption,(x: T) => x.toString) 
+  }
+  
   def assertFalse = assert(false);
   
   def time[R](block: => R): R = {
@@ -44,7 +56,7 @@ package object util {
     
   }
   
-  implicit final class SeqOps[T](val x: Seq[T]) {
+  implicit final class IterableOps[T](val x: Iterable[T]) {
   
     @inline
     def hasDistinctElements: Boolean = {
@@ -60,7 +72,7 @@ package object util {
     }
     
     @inline
-    def interleave(y: Seq[T]): Seq[T] = {
+    def interleave(y: Iterable[T]): Iterable[T] = {
       x.zip(y) flatMap { case (a, b) => Seq(a, b) }
     }
 

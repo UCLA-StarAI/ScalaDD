@@ -16,15 +16,8 @@
 
 package edu.ucla.cs.starai.sdd.manager.normalized
 
-import edu.ucla.cs.starai.sdd.BuilderVTree
-import edu.ucla.cs.starai.sdd.SDD
-import edu.ucla.cs.starai.sdd.Compressed
-import edu.ucla.cs.starai.sdd.Normalized
 import edu.ucla.cs.starai.logic._
-import edu.ucla.cs.starai.sdd.TerminalNode
-import edu.ucla.cs.starai.sdd.DecisionNode
-import edu.ucla.cs.starai.sdd.TrueNode
-import edu.ucla.cs.starai.sdd.FalseNode
+import edu.ucla.cs.starai.sdd._
 import edu.ucla.cs.starai.sdd.manager.UniqueNodesCache
 
 
@@ -36,7 +29,7 @@ trait SDDManager extends VTree[SDDManager] with BuilderVTree[ManagedSDD]{
 
 object SDDManager{
   
-  def apply(vtree: VTree.SomeVtree): SDDManager = SDDManagerImpl(vtree)
+  def apply(vtree: VTree.Some): SDDManager = SDDManagerImpl(vtree)
   
 }
 
@@ -46,7 +39,7 @@ trait SDDManagerLeaf extends SDDManager with VTreeLeaf[SDDManager] {
   
   private abstract class MyTerminal extends {
     val vtree = SDDManagerLeaf.this
-  } with  ManagedTerminal
+  } with ManagedTerminal
   
   private abstract class MyLiteral(val literal: Literal) extends MyTerminal
   
@@ -62,7 +55,7 @@ trait SDDManagerLeaf extends SDDManager with VTreeLeaf[SDDManager] {
      }else throw new IllegalArgumentException(s"$this cannot build literal $l, only for $variable")
   }
   
-  def partition(primes: Seq[ManagedSDD],subs: Seq[ManagedSDD]): ManagedDecision = {
+  def partition(decomp: XYDecomposition[ManagedSDD]): ManagedSDD = {
     throw new IllegalArgumentException(s"$this cannot build partitions")
   }
   
@@ -83,7 +76,7 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
   
   val uniqueNodesCache: UniqueNodesCache[ManagedSDD]
   
-  private class MyDecision(val primes: Seq[ManagedSDD], val subs: Seq[ManagedSDD]) 
+  private class MyDecision(val decomp: CompressedXYDecomposition[ManagedSDD]) 
     extends {
     val vtree = SDDManagerINode.this
   } with ManagedDecision 
@@ -92,54 +85,39 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
   private[this] val trimmableSubs = Seq(vr.True,vr.False)
   
   val True: ManagedDecision with ManagedTrue = 
-    new MyDecision(trimmablePrimes,Seq(vr.True)) 
+    new MyDecision(CompressedXYDecomposition(vl.True,vr.True)) 
       with ManagedTrue with CachedNegation
-  uniqueNodesCache.register(True.primes, True.subs, True)
+  uniqueNodesCache.register(True)
       
   val False: ManagedDecision with ManagedFalse = 
-    new MyDecision(trimmablePrimes,Seq(vr.False)) 
+    new MyDecision(CompressedXYDecomposition(vl.True,vr.False)) 
       with ManagedFalse with CachedNegation
-  uniqueNodesCache.register(False.primes, False.subs, False)
+  uniqueNodesCache.register(False)
       
   override def literal(l: Literal) = literalCache(l)
       
   protected val literalCache: Map[Literal,ManagedSDD] = (
        vl.literals.map{ l => 
-         val primes = Seq(vl.literal(l),!vl.literal(l))
-         (l-> uniqueNodesCache.getOrBuild(primes, trimmableSubs,
-           () => new MyDecision(primes,trimmableSubs) 
+         val decomp = CompressedXYDecomposition(vl.literal(l),vr.True,vl.literal(!l),vr.False)
+         (l-> uniqueNodesCache.getOrBuild(decomp,
+           () => new MyDecision(decomp) 
                    with ManagedLiteral with CachedNegation {
              def literal = l
            }))
        } ++ 
        vr.literals.map{ l => 
-         val subs = Seq(vr.literal(l))
-         (l->uniqueNodesCache.getOrBuild(trimmablePrimes, subs,
-           () => new MyDecision(trimmablePrimes,subs) 
+         val decomp = CompressedXYDecomposition(vl.True,vr.literal(l))
+         (l->uniqueNodesCache.getOrBuild(decomp,
+           () => new MyDecision(decomp) 
                    with ManagedLiteral with CachedNegation {
              def literal = l
            }))
        }).toMap
   
-  def partition(primes: Seq[ManagedSDD], subs: Seq[ManagedSDD]): ManagedSDD = {
-    val normalizedPrimes = primes.map(vl.normalize(_))
-    val normalizedSubs = subs.map(vr.normalize(_))
-    val compressed = normalizedSubs.hasDistinctElements
-    val consistentPrimes = primes.forall(_.isConsistent)
-    val (newPrimes,newSubs) = 
-      if(compressed && consistentPrimes) (normalizedPrimes,normalizedSubs)
-      else {
-        // remove inconsistent primes
-        val elems = (normalizedPrimes zip normalizedSubs).filter(_._1.isConsistent)
-        // compress
-        val primesBySub = elems.groupBy(_._2 ).mapValues { _.map( _._1) }
-    	  val primeBySub = primesBySub.mapValues { _.reduce { (p1, p2) => p1 || p2 } 
-  	                                              /*TODO: optimize this order*/ }
-    	  val (subsIter,primesIter) = primeBySub.unzip
-    	  (primesIter.toSeq,subsIter.toSeq)
-      }
-     uniqueNodesCache.getOrBuild(newPrimes, newSubs, () => 
-       new MyDecision(newPrimes,newSubs))
+  def partition(decomp: XYDecomposition[ManagedSDD]): ManagedSDD = decomp match {
+    case decomp: CompressedXYDecomposition[ManagedSDD] => 
+      uniqueNodesCache.getOrBuild(decomp, () => new MyDecision(decomp))
+    case _ => ???
   }
   
   def indepConjoin(x: ManagedSDD, y: ManagedSDD): ManagedSDD = {
@@ -150,9 +128,9 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
     val xleft = vl.contains(x.vtree) 
     val yleft = vl.contains(y.vtree) 
     if(xleft && !yleft){
-      partition(Seq(x,!x),Seq(y,vr.False))
+      partition(CompressedXYDecomposition(x,y,!x,vr.False))
     }else if(!xleft && yleft){
-      partition(Seq(y,!y),Seq(x,vr.False))
+      partition(CompressedXYDecomposition(y,x,!y,vr.False))
     }else if(xleft && yleft){
       decorateLeft(vl.indepConjoin(x, y))
     }else{
@@ -173,8 +151,10 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
     }
   }
   
-  def decorateLeft(sdd: ManagedSDD) = partition(Seq(sdd,!sdd),trimmableSubs)
+  def decorateLeft(sdd: ManagedSDD) = 
+      partition(CompressedXYDecomposition(sdd,vr.True,!sdd,vr.False))
   
-  def decorateRight(sdd: ManagedSDD) = partition(trimmablePrimes,Seq(sdd))
-  
+  def decorateRight(sdd: ManagedSDD) = 
+      partition(CompressedXYDecomposition(vl.True,sdd))
+      
 }

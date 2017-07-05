@@ -23,16 +23,18 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheStats
 import edu.ucla.cs.starai.sdd.SDD
 import edu.ucla.cs.starai.util._
+import edu.ucla.cs.starai.sdd.XYDecomposition
+import edu.ucla.cs.starai.sdd.DecisionNode
 
 trait UniqueNodesCache[N <: SDD] {
   
   def cacheSize: Long
   
-  def getOrBuild(primes: Seq[N], subs: Seq[N], build: () => N): N
+  def getOrBuild(decomp: XYDecomposition[N], build: () => N): N
   
-  def register(primes: Seq[N], subs: Seq[N], v: N) = {
-    val registered = getOrBuild(primes, subs, () => v)
-    require(registered eq v)
+  def register(decision: DecisionNode[N] with N) = {
+    val registered = getOrBuild(decision.decomp, () => decision)
+    require(registered eq decision, "Cannot register node that is already cached")
   }
   
 }
@@ -43,8 +45,8 @@ class GoogleWeakCache[N <: SDD] extends UniqueNodesCache[N] {
   // make sure cache keys cannot reference cache values, or auto-GC is broken!
   private[this] case class Key(elems: Set[(N,N)]){
 
-    def this(primes: Seq[N], subs: Seq[N]){
-      this((primes zip subs).toSet)
+    def this(decomp: XYDecomposition[N]){
+      this(decomp.elements.map(e => (e.prime,e.sub)).toSet)
     }
     
   }
@@ -54,8 +56,8 @@ class GoogleWeakCache[N <: SDD] extends UniqueNodesCache[N] {
     .weakValues()
     .build()
     
-  def getOrBuild(primes: Seq[N], subs: Seq[N], build: () => N): N = {
-    cache.get(new Key(primes,subs), build)
+  def getOrBuild(decomp: XYDecomposition[N], build: () => N): N = {
+    cache.get(new Key(decomp), build)
   }
     
   def cacheSize: Long = cache.size

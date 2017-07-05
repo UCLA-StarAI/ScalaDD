@@ -16,6 +16,8 @@
 
 package edu.ucla.cs.starai
 
+import scala.language.implicitConversions
+
 package object logic {
   
   implicit class Variable(val under: Int) extends AnyVal {

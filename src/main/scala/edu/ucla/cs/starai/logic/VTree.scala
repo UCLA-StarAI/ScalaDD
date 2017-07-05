@@ -52,12 +52,12 @@ trait VTree[+N <: VTree[N]] extends DoubleLinkedTree[N] {
 
 object VTree{
   
-  type SomeVtree = VTree[T] forSome { type T <: VTree[T] }
+  type Some = VTree[T] forSome { type T <: VTree[T] }
   
   /**
    * Generate balanced vtree for variables X{offset+1} to X{offset+numVars} inclusive
    */
-  def balanced(numVars: Int, offset: Int=0): SomeVtree = 
+  def balanced(numVars: Int, offset: Int=0): Some = 
     VTreeImpl.balanced(numVars,offset)
   
 }
@@ -95,5 +95,13 @@ trait VTreeINode[+N <: VTree[N]] extends VTree[N] {
   
   private[this] val containsCache: Set[Any] = iterator.toSet
   override def contains[U >: N](that: U) = containsCache.contains(that)
+  
+}
+
+
+
+object VTreeINode{
+  
+  type Some = VTreeINode[T] forSome { type T <: VTree[T] }
   
 }

@@ -33,7 +33,7 @@ class VTreeParser(verbosity: Int = 0) {
   // used for IO
   // TODO clean up, use proper parser
   
-  def parse(src: Source): VTree.SomeVtree = {
+  def parse(src: Source): VTree.Some = {
     //c ids of vtree nodes start at 0
     //c ids of variables start at 1
     //c vtree nodes appear bottom-up, children before parents
