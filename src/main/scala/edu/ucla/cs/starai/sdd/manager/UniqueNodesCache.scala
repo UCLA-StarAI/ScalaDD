@@ -41,23 +41,15 @@ trait UniqueNodesCache[N <: SDD] {
 
 class GoogleWeakCache[N <: SDD] extends UniqueNodesCache[N] {
     
-  // make sure cache is symmetric wrt arguments
   // make sure cache keys cannot reference cache values, or auto-GC is broken!
-  private[this] case class Key(elems: Set[(N,N)]){
-
-    def this(decomp: XYDecomposition[N]){
-      this(decomp.elements.map(e => (e.prime,e.sub)).toSet)
-    }
-    
-  }
   
-  private[this] val cache: Cache[Key,N] = CacheBuilder
+  private[this] val cache: Cache[XYDecomposition[N],N] = CacheBuilder
     .newBuilder
     .weakValues()
     .build()
     
   def getOrBuild(decomp: XYDecomposition[N], build: () => N): N = {
-    cache.get(new Key(decomp), build)
+    cache.get(decomp, build)
   }
     
   def cacheSize: Long = cache.size

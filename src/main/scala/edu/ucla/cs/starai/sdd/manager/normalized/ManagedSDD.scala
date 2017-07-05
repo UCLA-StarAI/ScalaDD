@@ -16,13 +16,14 @@
 
 package edu.ucla.cs.starai.sdd.manager.normalized
 
-import edu.ucla.cs.starai.logic.Circuit
+import edu.ucla.cs.starai.logic._
 import edu.ucla.cs.starai.sdd._
+import scala.collection._
 
 /**
  * A normalized compressed SDD that is managed by its VTree
  */
-trait ManagedSDD extends Circuit[ManagedSDD]
+sealed trait ManagedSDD extends Circuit[ManagedSDD]
   with ComposableSDD[ManagedSDD] 
   with Normalized with Compressed[ManagedSDD]{
   
@@ -54,7 +55,29 @@ trait ManagedTerminal extends ManagedSDD with ComposableTerminal[ManagedSDD] wit
 
 trait ManagedTrue extends ManagedSDD with ComposableTrueNode[ManagedSDD]
 trait ManagedFalse extends ManagedSDD with ComposableFalseNode[ManagedSDD]
-trait ManagedLiteral extends ManagedSDD with ComposableLiteralNode[ManagedSDD]
+trait ManagedLiteral extends ManagedSDD with ComposableLiteralNode[ManagedSDD]{
+  
+}
+
+trait ManagedDecisionLiteral extends ManagedDecision with ManagedLiteral{
+  
+  // specialized for performance improvement
+  override def assign(l: Literal): ManagedSDD = {
+    if(this.literal == l) this
+    else if(this.literal == !l) vtree.False
+    else if(vtree.vl contains l.variable) assignLeft(l)
+    else if(vtree.vr contains l.variable) assignRight(l)
+    else {
+      val lca = (this.vtree lca l.variable)
+      val y = lca.nodeFor(l.variable).literal(l)
+      lca.indepConjoin(this,y)
+    }
+  }
+  
+  // specialized for performance improvement
+  override def &&(that: ManagedSDD): ManagedSDD = (that assign literal)
+  
+}
 
 trait CachedNegation extends ManagedSDD {
   

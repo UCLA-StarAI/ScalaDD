@@ -140,13 +140,13 @@ trait ComposableDecisionNode[N <: ComposableSDD[N]] extends DecisionNode[N] with
       lca.indepConjoin(this,y)
     }
 
-  @inline protected def assignRight(l: Literal) =  vtree.partition(decomp.mapSubs(_ assign l))
-
   @inline
   protected def assignLeft(l: Literal) = {
     val lNode = vtree.vl.literal(l)
     vtree.partition(decomp.mapPrimes(_ assign l) + (!lNode, falseSub))
   }
+  
+  @inline protected def assignRight(l: Literal) =  vtree.partition(decomp.mapSubs(_ assign l))
 
   /**
    * If FastComposable, dispatch to other

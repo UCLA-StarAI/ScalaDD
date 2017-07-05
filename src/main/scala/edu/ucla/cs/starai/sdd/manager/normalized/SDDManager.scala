@@ -101,7 +101,7 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
          val decomp = CompressedXYDecomposition(vl.literal(l),vr.True,vl.literal(!l),vr.False)
          (l-> uniqueNodesCache.getOrBuild(decomp,
            () => new MyDecision(decomp) 
-                   with ManagedLiteral with CachedNegation {
+                   with ManagedDecisionLiteral with CachedNegation {
              def literal = l
            }))
        } ++ 
@@ -109,7 +109,7 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
          val decomp = CompressedXYDecomposition(vl.True,vr.literal(l))
          (l->uniqueNodesCache.getOrBuild(decomp,
            () => new MyDecision(decomp) 
-                   with ManagedLiteral with CachedNegation {
+                   with ManagedDecisionLiteral with CachedNegation {
              def literal = l
            }))
        }).toMap
