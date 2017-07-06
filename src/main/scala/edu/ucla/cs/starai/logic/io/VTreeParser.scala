@@ -40,7 +40,7 @@ class VTreeParser(verbosity: Int = 0) {
     var l = 0;
     val lines = src.getLines().toArray
     val (comments, code) = lines.partition { _.startsWith("c") }
-    if (verbosity>1) {
+    if (verbosity>0) {
       println("Comments:")
       println(comments.mkString("\n"))
       println
@@ -57,9 +57,9 @@ class VTreeParser(verbosity: Int = 0) {
     val vtreeNodes = Array.ofDim[VTreeImpl](nbNodes)
     var lastNode: VTreeImpl = null // needed because node index may not be bottom-up
     for (linei <- 0 until nbNodes) {
-      if (verbosity>1 ) println("Reading VTree file "+(linei*100/nbNodes)+"%")
+      if (verbosity>0 ) println("Reading VTree file "+(linei*100/nbNodes)+"%")
       val line = code(1 + linei).split(" ").toList
-      println("Compiling line "+l+": " + line); l+=1
+      if (verbosity>0 ) println("Parsing line "+l+": " + line); l+=1
       line match {
         //c L id-of-leaf-vtree-node id-of-variable
         case "L" :: tail => {

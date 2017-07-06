@@ -41,6 +41,12 @@ trait ManagedDecision extends ManagedSDD
   with ComposableDecisionNode[ManagedSDD] 
   with NormalizedDecision[ManagedSDD] with CompressedDecision[ManagedSDD] {
   
+  /**
+   * All managed decisions are consistent unless overridden by ManagedFalse
+   */
+  override def isConsistent = true
+  override def isConsistent(cache: Cache[Boolean]) = isConsistent
+  
   def vtree: SDDManagerINode
   
   override def decomp: CompressedXYDecomposition[ManagedSDD]
@@ -53,14 +59,16 @@ trait ManagedTerminal extends ManagedSDD with ComposableTerminal[ManagedSDD] wit
   
 }
 
-trait ManagedTrue extends ManagedSDD with ComposableTrueNode[ManagedSDD]
+trait ManagedTrue extends ManagedSDD with ComposableTrueNode[ManagedSDD]{
+    
+}
 trait ManagedFalse extends ManagedSDD with ComposableFalseNode[ManagedSDD]
 trait ManagedLiteral extends ManagedSDD with ComposableLiteralNode[ManagedSDD]{
   
 }
 
 trait ManagedDecisionLiteral extends ManagedDecision with ManagedLiteral{
-  
+    
   // specialized for performance improvement
   override def assign(l: Literal): ManagedSDD = {
     if(this.literal == l) this

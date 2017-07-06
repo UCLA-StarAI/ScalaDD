@@ -27,25 +27,11 @@ object CompilerScratch extends App {
     
   assertFalse
   
-  val parser = new VTreeParser(1)
+  val vtreeParser = new VTreeParser(1)
   
-//  val cnf = DimacsIO.parse("examples/s208.1.scan.cnf")
-  
-  val cnf = DimacsIO.parse("examples/count.cnf")
-  
-//  val vtree = parser.parse(new File("examples/count.cnf.vtree"))
-    
-//  val cnf = DimacsIO.parse(Source.fromResource("cnfs/count-short.cnf"))
-//  val cnf = DimacsIO.parse(Source.fromResource("cnfs/count-shorter.cnf"))
-  val vtree = parser.parse(Source.fromResource("cnfs/count.vtree"))
-  
-//  val cnf = DimacsIO.parse("examples/c8.cnf")"
-  
-//  val cnf = DimacsIO.parse("examples/c432.isc.cnf")
-  
-//  val cnf = DimacsIO.parse("examples/big-swap.cnf")
-//  val vtree = parser.parse(new File("examples/big-swap.cnf.vtree"))
-  
+  val cnf = DimacsIO.parse(Source.fromResource("cnfs/easy/count_mince.cnf"))
+  val vtree = vtreeParser.parse(Source.fromResource("cnfs/easy/count_mince.min.vtree"))
+//  val vtree = vtreeParser.parse(Source.fromResource("cnfs/easy/count_mince.balanced.vtree"))
   
 //  val compiler = new NaiveCompiler
   val compiler = new TreeCompiler

@@ -28,20 +28,22 @@ class FileCompilationSpec extends FlatSpec with SDDBehaviors {
   
   val vtreeParser = new VTreeParser
   val cnfParser = DimacsIO
+  val compiler = new TreeCompiler(0)
   
-  behavior of "Count-Short CNF"
-  val cnf = cnfParser.parse(Source.fromResource("cnfs/count-short.cnf"))
-  val vtree = vtreeParser.parse(Source.fromResource("cnfs/count.vtree"))
+  {
+    behavior of "Count-Short CNF"
+    val cnf = cnfParser.parse(Source.fromResource("cnfs/easy/cm151a_mince.cnf"))
+    val vtree = vtreeParser.parse(Source.fromResource("cnfs/easy/cm151a_mince.balanced.vtree"))
+    val sdd = compiler.compile(cnf, vtree)
+    it should behave like correctUsedVarModelCount(sdd,4096)
+  }
   
-  println(s"Number of variables = ${cnf.numVars}")
-  println(s"Number of clauses = ${cnf.numClauses}")
-  println(s"Number of vtree nodes = ${vtree.numNodes}")
-  println(s"Number of vtree variables = ${vtree.numVariables}")
-  
-  val compiler = new TreeCompiler
-  val sdd = compiler.compile(cnf, vtree)
-  
-//  it should behave like correctSize(sdd,7)
-//  it should behave like correctModelCount(sdd,0)
+  {
+    behavior of "Count-Short CNF"
+    val cnf = DimacsIO.parse(Source.fromResource("cnfs/easy/count_mince.cnf"))
+    val vtree = vtreeParser.parse(Source.fromResource("cnfs/easy/count_mince.min.vtree"))
+    val sdd = compiler.compile(cnf, vtree)
+    it should behave like correctUsedVarModelCount(sdd,34359738368L)
+  }
     
 }

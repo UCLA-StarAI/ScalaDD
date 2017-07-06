@@ -27,9 +27,15 @@ trait SDDBehaviors { this: FlatSpec =>
     }
   }
   
-  def correctModelCount(sdd: => SDD, modelCount: Int) {
+  def correctModelCount(sdd: => SDD, modelCount: BigInt) {
     it should s"have model count $modelCount" in {
       assert(sdd.modelCount === modelCount)
+    }
+  }
+
+  def correctUsedVarModelCount(sdd: => SDD, modelCount: BigInt) {
+    it should s"have used var model count $modelCount" in {
+      assert(sdd.usedVarsModelCount === modelCount)
     }
   }
 

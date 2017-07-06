@@ -26,7 +26,7 @@ case class Comment(comment: String) extends DimacsCNFLine {
 }
 
 object Comment{
-  val Line = """^c (.*)""".r
+  val Line = """^c(.*)""".r
 }
 
 case class PLine(numVars: Int, numClauses: Int) extends DimacsCNFLine {

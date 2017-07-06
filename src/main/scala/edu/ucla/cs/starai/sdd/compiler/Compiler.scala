@@ -39,7 +39,7 @@ trait Compiler {
 }
 
 
-class NaiveCompiler extends Compiler {
+class NaiveCompiler(val verbose: Int = 1) extends Compiler {
   
   override def compile(cnf: DimacsCNF, mgr: SDDManager): ManagedSDD = {
     // do this in a way that allows for garbage collection
@@ -48,7 +48,7 @@ class NaiveCompiler extends Compiler {
     var cnfSDD: ManagedSDD = mgr.True
     for(clause <- cnf.clauseLines){
       i = i+1
-      println(s"(${(i*100)/numClauses}%, size ${cnfSDD.sddSize}) Compiling clause $clause ")
+      if(verbose>0) println(s"(${(i*100)/numClauses}%, size ${cnfSDD.sddSize}) Compiling clause $clause ")
       cnfSDD = cnfSDD && compileClause(clause,mgr)
     }
     cnfSDD
@@ -56,7 +56,7 @@ class NaiveCompiler extends Compiler {
   
 }
 
-class TreeCompiler extends Compiler {
+class TreeCompiler(val verbose: Int = 1) extends Compiler {
   
   override def compile(cnf: DimacsCNF, mgr: SDDManager): ManagedSDD = {
     
@@ -75,19 +75,19 @@ class TreeCompiler extends Compiler {
       case Left(leaf) => removeRelevantClauses(leaf).foldLeft[ManagedSDD](leaf.True){
         (cnf,cl) => 
           i = i+1
-          println(s"(${(i*100)/numClauses}%, size ${cnf.sddSize}) Compiling clause $cl ")
+          if(verbose>0) println(s"(${(i*100)/numClauses}%, size ${cnf.sddSize}) Compiling clause $cl ")
           (cnf && compileClause(cl,leaf))
       }
       case Right(inode) => {
         assume(childCnfs.size == 2)
         val cnfX = childCnfs(0)
         val cnfY = childCnfs(1)
-        println(s"(${(i*100)/numClauses}%, size ${cnfX.sddSize},${cnfY.sddSize}) Compiling aggregate CNF ")
+        if(verbose>0) println(s"(${(i*100)/numClauses}%, size ${cnfX.sddSize},${cnfY.sddSize}) Compiling aggregate CNF ")
         val cnfXY = inode.indepConjoin(cnfX,cnfY)
         val myCnf = removeRelevantClauses(inode).foldLeft[ManagedSDD](cnfXY){
           (cnf,cl) => 
             i = i+1
-            println(s"(${(i*100)/numClauses}%, size ${cnf.sddSize}) Compiling clause $cl ")
+            if(verbose>0) println(s"(${(i*100)/numClauses}%, size ${cnf.sddSize}) Compiling clause $cl ")
             (cnf && compileClause(cl,inode))
         }
         myCnf
