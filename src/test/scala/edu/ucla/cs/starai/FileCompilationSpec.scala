@@ -31,7 +31,7 @@ class FileCompilationSpec extends FlatSpec with SDDBehaviors {
   val compiler = new TreeCompiler(0)
   
   {
-    behavior of "Count-Short CNF"
+    behavior of "CNF cm151a_mince"
     val cnf = cnfParser.parse(Source.fromResource("cnfs/easy/cm151a_mince.cnf"))
     val vtree = vtreeParser.parse(Source.fromResource("cnfs/easy/cm151a_mince.balanced.vtree"))
     val sdd = compiler.compile(cnf, vtree)
@@ -39,7 +39,7 @@ class FileCompilationSpec extends FlatSpec with SDDBehaviors {
   }
   
   {
-    behavior of "Count-Short CNF"
+    behavior of "CNF count_mince"
     val cnf = DimacsIO.parse(Source.fromResource("cnfs/easy/count_mince.cnf"))
     val vtree = vtreeParser.parse(Source.fromResource("cnfs/easy/count_mince.min.vtree"))
     val sdd = compiler.compile(cnf, vtree)
