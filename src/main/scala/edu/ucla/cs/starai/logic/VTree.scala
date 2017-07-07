@@ -35,7 +35,7 @@ trait VTree[+N <: VTree[N]] extends DoubleLinkedTree[N] {
     
   def lca(v: Variable): N = {
     if(variables.contains(v)) this
-    else ancestors.find(_.contains(v)).get
+    else parent.get.lca(v)
   }
   
   def childFor(v: Variable): Option[N]

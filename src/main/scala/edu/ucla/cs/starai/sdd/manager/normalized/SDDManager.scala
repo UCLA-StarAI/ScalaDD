@@ -132,9 +132,9 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
     }else if(!xleft && yleft){
       partition(CompressedXYDecomposition(y,x,!y,vr.False))
     }else if(xleft && yleft){
-      decorateLeft(vl.indepConjoin(x, y))
+      normalizeLeft(vl.indepConjoin(x, y))
     }else{
-      decorateRight(vr.indepConjoin(x, y))
+      normalizeRight(vr.indepConjoin(x, y))
     }
   }
   
@@ -144,17 +144,20 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
     } else if(!this.contains(sdd.vtree)){
       throw new IllegalArgumentException(s"$this cannot build sdds for other managers")
     } else if(vl.contains(sdd.vtree)){
-      decorateLeft(sdd)
+      normalizeLeft(sdd)
     }else{
       assume(vr.contains(sdd.vtree))
-      decorateRight(sdd)
+      normalizeRight(sdd)
     }
   }
   
-  def decorateLeft(sdd: ManagedSDD) = 
-      partition(CompressedXYDecomposition(sdd,vr.True,!sdd,vr.False))
+  def normalizeLeft(sdd: ManagedSDD) = {
+    val sddLeft = vl.normalize(sdd)
+    partition(CompressedXYDecomposition(sddLeft,vr.True,!sddLeft,vr.False))
+  }
+      
   
-  def decorateRight(sdd: ManagedSDD) = 
-      partition(CompressedXYDecomposition(vl.True,sdd))
+  def normalizeRight(sdd: ManagedSDD) = 
+      partition(CompressedXYDecomposition(vl.True,vr.normalize(sdd)))
       
 }

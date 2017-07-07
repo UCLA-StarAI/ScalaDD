@@ -97,15 +97,18 @@ trait ComposableLiteralNode[N <: ComposableSDD[N]] extends LiteralNode with Fast
     else if(this.literal == !l) vtree.False
     else (this.vtree lca l.variable).literal(this.literal)
     
-  override abstract def assign(l: Literal): N = 
+  override def assign(l: Literal): N = 
     if(this.literal == l) this
     else if(this.literal == !l) vtree.False
-    else {
-      val lca = (this.vtree lca l.variable)
-      val Some((c1,c2,parent)) = lca.splitFor(l.variable,this.variable)
+    else if(this.vtree.contains(l.variable)){
+      val Some((c1,c2,parent)) = vtree.splitFor(l.variable,this.variable)
       val lit1 = c1.literal(l)
       val lit2 = c2.literal(this.literal)
-      lca.normalize(parent.indepConjoin(lit1,lit2))
+      vtree.normalize(parent.indepConjoin(lit1,lit2))
+    }else{
+      val lca = (this.vtree lca l.variable)
+      val lit = lca.childFor(l.variable).get.literal(l)
+      lca.indepConjoin(this,lit)
     }
     
   override def &&(that: N): N = (that assign literal)

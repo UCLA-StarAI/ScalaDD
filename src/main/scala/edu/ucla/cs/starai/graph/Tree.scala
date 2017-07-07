@@ -46,7 +46,7 @@ trait DoubleLinkedTree[+N <: DoubleLinkedTree[N]] extends Tree[N] {
     
     def ancestors: List[N] = parent.map(p => p :: p.ancestors).getOrElse(Nil)
     
-    def root = ancestors.last
+    def root = (this :: ancestors).last
     
     // prefer exception over option return type here
     def lca[U >: N <: DoubleLinkedTree[U]](that: U): U = {

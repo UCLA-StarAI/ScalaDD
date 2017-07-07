@@ -64,27 +64,30 @@ trait ManagedTrue extends ManagedSDD with ComposableTrueNode[ManagedSDD]{
 }
 trait ManagedFalse extends ManagedSDD with ComposableFalseNode[ManagedSDD]
 trait ManagedLiteral extends ManagedSDD with ComposableLiteralNode[ManagedSDD]{
+    
+//  private[this] val assignPos = new Array [ManagedSDD](400)
+//  private[this] val assignNeg = new Array [ManagedSDD](400)
+//  
+//  final override def assign(l: Literal): ManagedSDD = {
+//    val v = l.variable.toInt
+//    if(l.isPositive){
+//      val cached = assignPos(v)
+//      if(cached == null) {
+//        assignPos(v) = super.assign(l)
+//        assignPos(v)
+//      }else cached
+//    }else{
+//      val cached = assignNeg(v)
+//      if(cached == null) {
+//        assignNeg(v) = super.assign(l)
+//        assignNeg(v)
+//      }else cached
+//    }
+//  }
   
 }
 
 trait ManagedDecisionLiteral extends ManagedDecision with ManagedLiteral{
-    
-//  // specialized for performance improvement
-//  override def assign(l: Literal): ManagedSDD = {
-//    if(this.literal == l) this
-//    else if(this.literal == !l) vtree.False
-//    else if(vtree.vl contains l.variable) assignLeft(l)
-//    else if(vtree.vr contains l.variable) assignRight(l)
-//    else {
-//      val lca = (this.vtree lca l.variable)
-//      val y = lca.nodeFor(l.variable).literal(l)
-//      lca.indepConjoin(this,y)
-//    }
-//  
-//  }
-//  
-//  // specialized for performance improvement
-//  override def &&(that: ManagedSDD): ManagedSDD = (that assign literal)
   
 }
 
