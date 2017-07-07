@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Guy Van den Broeck
+ * Copyright 2017 Guy Van den Broeck <guyvdb@cs.ucla.edu>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ package object logic {
     def isPositive = (under > 0)
     def isNegative = (under < 0)
     
-    override def toString = if(isPositive) variable.toString else s"-$variable" 
+    override def toString = if(isPositive) variable.toString else "-"+variable.toString
   }
   
   implicit def variable2Literal(v: Variable): Literal = v.toLiteral

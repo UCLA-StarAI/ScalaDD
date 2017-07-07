@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Guy Van den Broeck
+ * Copyright 2017 Guy Van den Broeck <guyvdb@cs.ucla.edu>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@ object CompilerScratch extends App {
   val vtreeParser = new VTreeParser(1)
   
   val cnf = DimacsIO.parse(Source.fromResource("cnfs/easy/count_mince.cnf"))
-  val vtree = vtreeParser.parse(Source.fromResource("cnfs/easy/count_mince.min.vtree"))
-//  val vtree = vtreeParser.parse(Source.fromResource("cnfs/easy/count_mince.balanced.vtree"))
+//  val vtree = vtreeParser.parse(Source.fromResource("cnfs/easy/count_mince.min.vtree"))
+  val vtree = vtreeParser.parse(Source.fromResource("cnfs/easy/count_mince.balanced.vtree"))
   
 //  val compiler = new NaiveCompiler
   val compiler = new TreeCompiler

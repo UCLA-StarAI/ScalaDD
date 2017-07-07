@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Guy Van den Broeck
+ * Copyright 2017 Guy Van den Broeck <guyvdb@cs.ucla.edu>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,12 +95,18 @@ trait ComposableLiteralNode[N <: ComposableSDD[N]] extends LiteralNode with Fast
   override def |(l: Literal): N = 
     if(this.literal == l) vtree.True
     else if(this.literal == !l) vtree.False
-    else this
+    else (this.vtree lca l.variable).literal(this.literal)
     
   override abstract def assign(l: Literal): N = 
     if(this.literal == l) this
     else if(this.literal == !l) vtree.False
-    else super.assign(l)
+    else {
+      val lca = (this.vtree lca l.variable)
+      val Some((c1,c2,parent)) = lca.splitFor(l.variable,this.variable)
+      val lit1 = c1.literal(l)
+      val lit2 = c2.literal(this.literal)
+      lca.normalize(parent.indepConjoin(lit1,lit2))
+    }
     
   override def &&(that: N): N = (that assign literal)
       
@@ -111,39 +117,36 @@ trait ComposableLiteralNode[N <: ComposableSDD[N]] extends LiteralNode with Fast
 trait ComposableDecisionNode[N <: ComposableSDD[N]] extends DecisionNode[N] with ComposableSDD[N] {
   
   self: N =>
-    
+       
   override def vtree: BuilderVTree[N] with VTreeINode[BuilderVTree[N]]
     
   def decomp: ComposableXYDecomposition[N]
   
   override def kind = Right(this)
-  
-  def falseSub = vtree.vr.False
-  def trueSub = vtree.vr.True
 
-  def unary_!(): N = vtree.partition(this.decomp.mapSubs(!_))
+  def unary_!(): N = vtree.partition(!this.decomp)
 
   def |(l: Literal): N = 
     if(vtree.vl contains l.variable) conditionLeft(l)
     else if(vtree.vr contains l.variable) conditionRight(l)
     else (vtree lca l.variable).normalize(this)
   
-  @inline protected def conditionLeft(l: Literal) = vtree.partition(decomp.mapPrimes(_|l))
-  @inline protected def conditionRight(l: Literal) =  vtree.partition(decomp.mapSubs(_|l))
+  protected def conditionLeft(l: Literal) = vtree.partition(decomp.mapPrimes(_|l))
+  protected def conditionRight(l: Literal) =  vtree.partition(decomp.mapSubs(_|l))
     
   def assign(l: Literal): N = 
     if(vtree.vl contains l.variable) assignLeft(l)
     else if(vtree.vr contains l.variable) assignRight(l)
     else {
       val lca = (this.vtree lca l.variable)
-      val y = lca.nodeFor(l.variable).literal(l)
-      lca.indepConjoin(this,y)
+      val lit = lca.childFor(l.variable).get.literal(l)
+      lca.indepConjoin(this,lit)
     }
 
   @inline
   protected def assignLeft(l: Literal) = {
-    val lNode = vtree.vl.literal(l)
-    vtree.partition(decomp.mapPrimes(_ assign l) + (!lNode, falseSub))
+    val lit = vtree.vl.literal(l)
+    vtree.partition(decomp.mapPrimes(_ assign l) + (!lit, vtree.vr.False))
   }
   
   @inline protected def assignRight(l: Literal) =  vtree.partition(decomp.mapSubs(_ assign l))
@@ -152,14 +155,15 @@ trait ComposableDecisionNode[N <: ComposableSDD[N]] extends DecisionNode[N] with
    * If FastComposable, dispatch to other
    */
   // TODO optimize for decompositions of size 1 and 2
-  override def &&(that: N): N = that.kind match{
-    case Left(terminal) => terminal && this
-    case Right(decision: FastComposable[N]) => decision && this
-    case Right(decision) => this conjoinDecision decision
-  }
-  
+  override def &&(that: N): N = {
+    assume(!this.isInstanceOf[FastComposable[_]], "FastComposables must override conjoin")
+    that.kind match{
+      case Left(terminal) => terminal && this
+      case Right(decision: FastComposable[N]) => decision && this
+      case Right(decision) => this conjoinDecision decision
+    }}
+      
   protected def conjoinDecision(that: ComposableDecisionNode[N] with N): N = {
-    //TODO avoid building subs for inconsistent primes
     if(this.vtree == that.vtree) vtree.partition(this.decomp && that.decomp)
     else if(this.vtree contains that.vtree) this.conjoinBelow(that)
     else if(that.vtree contains this.vtree) that.conjoinBelow(this)
@@ -170,10 +174,10 @@ trait ComposableDecisionNode[N <: ComposableSDD[N]] extends DecisionNode[N] with
    * Conjoin with an argument that respects a vtree node strictly below this node's vtree
    */
   protected def conjoinBelow(that: ComposableDecisionNode[N] with N): N = {
-    assume(this.vtree contains that.vtree)
     if(this.vtree.vl contains that.vtree){
-       this.vtree.partition(decomp.mapPrimes(_ && that) + (!that, this.falseSub))
+       this.vtree.partition(decomp.mapPrimes(_ && that) + (!that, vtree.vr.False))
     }else{
+       assume(this.vtree.vr contains that.vtree)
        this.vtree.partition(decomp.mapSubs(_ && that))
     }
   }

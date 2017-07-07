@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Guy Van den Broeck
+ * Copyright 2017 Guy Van den Broeck <guyvdb@cs.ucla.edu>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,6 +117,12 @@ trait CompressedXYDecomposition[N <: Compressed[N]]
   def &&(that: CompressedXYDecomposition[N]): CompressedXYDecomposition[N] = {
     val elemConjoin = for(e1 <- this.elements; e2 <- that.elements) yield e1 && e2
     compress(elemConjoin.flatten)
+  }
+  
+  // avoids unnecessary compression on negation
+  override def unary_! = {
+    val negElements = elements.map(_.mapSub(!_))
+    new CompressedXYDecompositionImpl(negElements,subsCache.map(!_))
   }
   
 }

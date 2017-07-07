@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Guy Van den Broeck
+ * Copyright 2017 Guy Van den Broeck <guyvdb@cs.ucla.edu>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,9 @@ trait ComposableXYDecomposition[N <: ComposableSDD[N]] extends XYDecomposition[N
     val elems = elemConjoin.flatten
     new MyDecomp(elems)
   }
+  
+  // specialize instead of using mapSubs because negation cannot undo compression
+  def unary_! = mapSubs(!_)
   
   private class MyDecomp(val elements: Seq[ComposableElement[N]]) extends ComposableXYDecomposition[N]
   

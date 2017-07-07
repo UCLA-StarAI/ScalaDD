@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Guy Van den Broeck
+ * Copyright 2017 Guy Van den Broeck <guyvdb@cs.ucla.edu>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,13 +38,8 @@ trait VTree[+N <: VTree[N]] extends DoubleLinkedTree[N] {
     else ancestors.find(_.contains(v)).get
   }
   
-  /**
-   * Assumes there exists an answer.
-   */
-  def nodeFor(v: Variable): N = find(_ match{
-    case x: VTreeLeaf[_] => x.variable == v
-    case _ => false
-  }).get
+  def childFor(v: Variable): Option[N]
+  def splitFor(v1: Variable, v2: Variable): Option[(N,N,VTreeINode[N] with N)]
   
   override def toString = s"VTree over ${variables.mkString(", ")}"
   
@@ -78,6 +73,9 @@ trait VTreeLeaf[+N <: VTree[N]] extends VTree[N] {
   
   override def contains[U >: N](that: U) = (that == this)
   
+  def childFor(v: Variable) = None
+  def splitFor(v1: Variable, v2: Variable) = None
+  
 }
 
 trait VTreeINode[+N <: VTree[N]] extends VTree[N] {
@@ -93,6 +91,20 @@ trait VTreeINode[+N <: VTree[N]] extends VTree[N] {
   override val variables = vl.variables union vr.variables
   override val children = Seq(vl,vr)
   
+  def splitFor(v1: Variable, v2: Variable): Option[(N,N,VTreeINode[N] with N)] = {
+    if(vl.contains(v1) && vr.contains(v2)) Some((vl,vr,this))
+    else if(vl.contains(v2) && vr.contains(v1)) Some((vr,vl,this))
+    else if(vl.contains(v1) && vl.contains(v2)) vl.splitFor(v1,v2)
+    else if(vr.contains(v1) && vr.contains(v2)) vr.splitFor(v1,v2)
+    else None
+  }
+  
+  def childFor(v: Variable) = {
+    if(vl.contains(v)) Some(vl)
+    else if(vr.contains(v)) Some(vr)
+    else None
+  }
+    
   private[this] val containsCache: Set[Any] = iterator.toSet
   override def contains[U >: N](that: U) = containsCache.contains(that)
   
