@@ -36,11 +36,11 @@ package object util {
   
   def assertFalse = assert(false);
   
-  def time[R](block: => R): R = {
-    val t0 = System.nanoTime()
+  def time[R](task: String)(block: => R): R = {
+    val t0 = System.currentTimeMillis()
     val result = block    // call-by-name
-    val t1 = System.nanoTime()
-    println("Elapsed time: " + (t1 - t0) + "ns")
+    val t1 = System.currentTimeMillis()
+    println(task + " took " + (t1 - t0)/1000.0 + "s")
     result
   }
    

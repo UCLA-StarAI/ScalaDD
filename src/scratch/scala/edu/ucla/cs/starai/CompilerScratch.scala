@@ -30,32 +30,32 @@ object CompilerScratch extends App {
   val vtreeParser = new VTreeParser(1)
   
   val cnf = DimacsIO.parse(Source.fromResource("cnfs/easy/count_mince.cnf"))
-//  val vtree = vtreeParser.parse(Source.fromResource("cnfs/easy/count_mince.min.vtree"))
-  val vtree = vtreeParser.parse(Source.fromResource("cnfs/easy/count_mince.balanced.vtree"))
+  val vtree = vtreeParser.parse(Source.fromResource("cnfs/easy/count_mince.min.vtree"))
+//  val vtree = vtreeParser.parse(Source.fromResource("cnfs/easy/count_mince.balanced.vtree"))
   
 //  val compiler = new NaiveCompiler
   val compiler = new TreeCompiler
   
-  val sdd = compiler.compile(cnf, vtree)
+  val sdd = time("Compilation"){compiler.compile(cnf, vtree)}
+  //76 81 78 82
   
-  
-  println(s"Number of variables = ${cnf.numVars}")
-  println(s"Number of clauses = ${cnf.numClauses}")
-  println(s"Number of vtree nodes = ${vtree.numNodes}")
-  println(s"Number of vtree variables = ${vtree.numVariables}")
-  
-  println(s"SDD used vars = ${sdd.usedVars}")
-  println(s"SDD used vars number = ${sdd.usedVars.size}")
+//  println(s"Number of variables = ${cnf.numVars}")
+//  println(s"Number of clauses = ${cnf.numClauses}")
+//  println(s"Number of vtree nodes = ${vtree.numNodes}")
+//  println(s"Number of vtree variables = ${vtree.numVariables}")
+//  
+//  println(s"SDD used vars = ${sdd.usedVars}")
+//  println(s"SDD used vars number = ${sdd.usedVars.size}")
   
   println(s"SDD size = ${sdd.sddSize}")
-  println(s"SDD nodes = ${sdd.numNodes}")
+//  println(s"SDD nodes = ${sdd.numNodes}")
   
 //  println(s"Trimmed SDD size = ${sdd.trimmedSize}")
 //  println(s"Trimmed SDD number of nodes = ${sdd.trimmedNumNodes}")
 //  println(sdd.trim)
   
-  println(s"Interpretation count = ${BigInt(2).pow(cnf.numVars)}")
-  println(s"SDD model count = ${sdd.modelCount}")
+//  println(s"Interpretation count = ${BigInt(2).pow(cnf.numVars)}")
+//  println(s"SDD model count = ${sdd.modelCount}")
   println(s"SDD used model count = ${sdd.usedVarsModelCount}")
   
 //  println(s"Manager unique nodes cache size = ${sdd.vtree.uniqueNodesCache}")

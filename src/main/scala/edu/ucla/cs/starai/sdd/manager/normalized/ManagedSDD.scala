@@ -19,6 +19,9 @@ package edu.ucla.cs.starai.sdd.manager.normalized
 import edu.ucla.cs.starai.logic._
 import edu.ucla.cs.starai.sdd._
 import scala.collection._
+import com.google.common.cache.Cache
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheStats
 
 /**
  * A normalized compressed SDD that is managed by its VTree
@@ -34,6 +37,7 @@ trait ManagedSDD extends Circuit[ManagedSDD]
   
   // gets called thousands of times
   final override def hashCode = System.identityHashCode(this);
+  
   
 }
 
@@ -65,25 +69,6 @@ trait ManagedTrue extends ManagedSDD with ComposableTrueNode[ManagedSDD]{
 trait ManagedFalse extends ManagedSDD with ComposableFalseNode[ManagedSDD]
 trait ManagedLiteral extends ManagedSDD with ComposableLiteralNode[ManagedSDD]{
     
-//  private[this] val assignPos = new Array [ManagedSDD](400)
-//  private[this] val assignNeg = new Array [ManagedSDD](400)
-//  
-//  final override def assign(l: Literal): ManagedSDD = {
-//    val v = l.variable.toInt
-//    if(l.isPositive){
-//      val cached = assignPos(v)
-//      if(cached == null) {
-//        assignPos(v) = super.assign(l)
-//        assignPos(v)
-//      }else cached
-//    }else{
-//      val cached = assignNeg(v)
-//      if(cached == null) {
-//        assignNeg(v) = super.assign(l)
-//        assignNeg(v)
-//      }else cached
-//    }
-//  }
   
 }
 
@@ -91,8 +76,18 @@ trait ManagedDecisionLiteral extends ManagedDecision with ManagedLiteral{
   
 }
 
-trait CachedNegation extends ManagedSDD {
+trait CachedComposition extends ManagedSDD {
   
-    override abstract lazy val unary_! = super.unary_!
+  final override abstract lazy val unary_! = super.unary_!
+  
+  private[this] val cache = CacheBuilder
+    .newBuilder
+    .weakKeys
+    .softValues()
+    .build[ManagedSDD,ManagedSDD]()
+    
+  final override def &&(that: ManagedSDD): ManagedSDD = {
+    cache.get(that, () => super.&&(that))
+  }
     
 }

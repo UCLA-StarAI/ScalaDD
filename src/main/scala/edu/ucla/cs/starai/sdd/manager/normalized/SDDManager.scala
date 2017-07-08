@@ -86,12 +86,12 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
   
   val True: ManagedDecision with ManagedTrue = 
     new MyDecision(CompressedXYDecomposition(vl.True,vr.True)) 
-      with ManagedTrue with CachedNegation
+      with ManagedTrue with CachedComposition
   uniqueNodesCache.register(True)
       
   val False: ManagedDecision with ManagedFalse = 
     new MyDecision(CompressedXYDecomposition(vl.True,vr.False)) 
-      with ManagedFalse with CachedNegation
+      with ManagedFalse with CachedComposition
   uniqueNodesCache.register(False)
       
   override def literal(l: Literal) = literalCache(l)
@@ -101,7 +101,7 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
          val decomp = CompressedXYDecomposition(vl.literal(l),vr.True,vl.literal(!l),vr.False)
          (l-> uniqueNodesCache.getOrBuild(decomp,
            () => new MyDecision(decomp) 
-                   with ManagedDecisionLiteral with CachedNegation {
+                   with ManagedDecisionLiteral with CachedComposition {
              def literal = l
            }))
        } ++ 
@@ -109,14 +109,15 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
          val decomp = CompressedXYDecomposition(vl.True,vr.literal(l))
          (l->uniqueNodesCache.getOrBuild(decomp,
            () => new MyDecision(decomp) 
-                   with ManagedDecisionLiteral with CachedNegation {
+                   with ManagedDecisionLiteral with CachedComposition {
              def literal = l
            }))
        }).toMap
   
   def partition(decomp: XYDecomposition[ManagedSDD]): ManagedSDD = decomp match {
     case decomp: CompressedXYDecomposition[ManagedSDD] => 
-      uniqueNodesCache.getOrBuild(decomp, () => new MyDecision(decomp))
+      uniqueNodesCache.getOrBuild(decomp, () => 
+        new MyDecision(decomp) with CachedComposition)
     case _ => ???
   }
   

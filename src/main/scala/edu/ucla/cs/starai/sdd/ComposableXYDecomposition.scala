@@ -57,7 +57,7 @@ trait ComposableXYDecomposition[N <: ComposableSDD[N]] extends XYDecomposition[N
   
 }
 
-trait ComposableElement[N <: ComposableSDD[N]] extends Element[N] {
+sealed trait ComposableElement[N <: ComposableSDD[N]] extends Element[N] {
   
   def &&(that: ComposableElement[N]): Option[ComposableElement[N]] = {
     val newPrime = that.prime && this.prime
@@ -78,6 +78,6 @@ trait ComposableElement[N <: ComposableSDD[N]] extends Element[N] {
 
 }
 
-class ComposableElementImpl[N <: ComposableSDD[N]](val prime: N, val sub: N) 
+final class ComposableElementImpl[N <: ComposableSDD[N]](val prime: N, val sub: N) 
   extends ComposableElement[N]
 
