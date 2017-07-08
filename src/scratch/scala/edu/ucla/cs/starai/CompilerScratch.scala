@@ -25,20 +25,29 @@ import edu.ucla.cs.starai.util._
 
 object CompilerScratch extends App {
     
-  assertFalse
+    assertFalse
   
   val vtreeParser = new VTreeParser(1)
   
-  val cnf = DimacsIO.parse(Source.fromResource("cnfs/easy/count_mince.cnf"))
-  val vtree = vtreeParser.parse(Source.fromResource("cnfs/easy/count_mince.min.vtree"))
-//  val vtree = vtreeParser.parse(Source.fromResource("cnfs/easy/count_mince.balanced.vtree"))
+  val suite = "iscas89"
+  val benchmark = "s510.scan" 
+  
+//  val suite = "easy"
+//  val benchmark = "count_mince" 
+  
+  val vtreeType = "min"
+//  val vtreeType = "balanced"
+  
+  val cnf = DimacsIO.parse(Source.fromResource(s"cnfs/$suite/$benchmark.cnf"))
+  val vtree = vtreeParser.parse(Source.fromResource(s"cnfs/$suite/$benchmark.$vtreeType.vtree"))
   
 //  val compiler = new NaiveCompiler
   val compiler = new TreeCompiler
   
   val sdd = time("Compilation"){compiler.compile(cnf, vtree)}
-  //76 81 78 82
-  
+  // 76 75 90 88
+  // 47 47
+
 //  println(s"Number of variables = ${cnf.numVars}")
 //  println(s"Number of clauses = ${cnf.numClauses}")
 //  println(s"Number of vtree nodes = ${vtree.numNodes}")
@@ -56,7 +65,7 @@ object CompilerScratch extends App {
   
 //  println(s"Interpretation count = ${BigInt(2).pow(cnf.numVars)}")
 //  println(s"SDD model count = ${sdd.modelCount}")
-  println(s"SDD used model count = ${sdd.usedVarsModelCount}")
+//  println(s"SDD used model count = ${sdd.usedVarsModelCount}")
   
 //  println(s"Manager unique nodes cache size = ${sdd.vtree.uniqueNodesCache}")
     

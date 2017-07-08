@@ -22,72 +22,94 @@ import scala.collection._
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheStats
+import com.google.common.cache.CacheLoader
 
 /**
  * A normalized compressed SDD that is managed by its VTree
  */
-trait ManagedSDD extends Circuit[ManagedSDD]
+sealed abstract class ManagedSDD extends Circuit[ManagedSDD]
   with ComposableSDD[ManagedSDD] 
   with Normalized with Compressed[ManagedSDD]{
   
   def vtree: SDDManager
   
-    // this seems to speed things up slightly for no reason
-  final override def equals(that: Any): Boolean = (that.asInstanceOf[AnyRef] eq this)
-  
-  // gets called thousands of times
-  final override def hashCode = System.identityHashCode(this);
-  
-  
 }
 
-trait ManagedDecision extends ManagedSDD
-  with ComposableDecisionNode[ManagedSDD] 
-  with NormalizedDecision[ManagedSDD] with CompressedDecision[ManagedSDD] {
-  
-  /**
-   * All managed decisions are consistent unless overridden by ManagedFalse
-   */
-  override def isConsistent = true
-  override def isConsistent(cache: Cache[Boolean]) = isConsistent
-  
-  def vtree: SDDManagerINode
-  
-  override def decomp: CompressedXYDecomposition[ManagedSDD]
-  
-}
-
-trait ManagedTerminal extends ManagedSDD with ComposableTerminal[ManagedSDD] with NormalizedTerminal {
+sealed abstract class ManagedTerminal extends ManagedSDD with ComposableTerminal[ManagedSDD] with NormalizedTerminal {
     
   def vtree: SDDManagerLeaf
   
 }
 
-trait ManagedTrue extends ManagedSDD with ComposableTrueNode[ManagedSDD]{
-    
-}
-trait ManagedFalse extends ManagedSDD with ComposableFalseNode[ManagedSDD]
-trait ManagedLiteral extends ManagedSDD with ComposableLiteralNode[ManagedSDD]{
-    
+sealed abstract class ManagedDecision extends ManagedSDD
+  with ComposableDecisionNode[ManagedSDD] 
+  with NormalizedDecision[ManagedSDD] with CompressedDecision[ManagedSDD] {
+  
+  def vtree: SDDManagerINode
+  def decomp: CompressedXYDecomposition[ManagedSDD]
   
 }
 
-trait ManagedDecisionLiteral extends ManagedDecision with ManagedLiteral{
+// concrete classes
+
+final class ManagedTrueTerminal(val vtree: SDDManagerLeaf) 
+  extends ManagedTerminal with ComposableTrueNode[ManagedSDD]{
   
 }
 
-trait CachedComposition extends ManagedSDD {
+final class ManagedFalseTerminal(val vtree: SDDManagerLeaf) 
+  extends ManagedTerminal with ComposableFalseNode[ManagedSDD]{
   
-  final override abstract lazy val unary_! = super.unary_!
+}
+
+final class ManagedLiteralTerminal(
+    val vtree: SDDManagerLeaf, val literal: Literal) 
+  extends ManagedTerminal with ComposableLiteralNode[ManagedSDD]{
   
-  private[this] val cache = CacheBuilder
-    .newBuilder
-    .weakKeys
-    .softValues()
-    .build[ManagedSDD,ManagedSDD]()
+}
+
+final class ManagedTrueDecision(
+    val vtree: SDDManagerINode, 
+    val decomp: CompressedXYDecomposition[ManagedSDD]) 
+  extends ManagedDecision with ComposableTrueNode[ManagedSDD]{
+  
+}
+
+final class ManagedFalseDecision(
+    val vtree: SDDManagerINode, 
+    val decomp: CompressedXYDecomposition[ManagedSDD]) 
+  extends ManagedDecision with ComposableFalseNode[ManagedSDD]
+  with CachingNegation[ManagedSDD]{
+  
+  override protected def unary_!* = super[ComposableFalseNode].unary_!
+  
+}
+
+final class ManagedLiteralDecision(
+    val vtree: SDDManagerINode, 
+    val decomp: CompressedXYDecomposition[ManagedSDD],
+    val literal: Literal) 
+  extends ManagedDecision with ComposableLiteralNode[ManagedSDD]
+  with CachingAssign[ManagedSDD]{
+  
+  override def assign(l: Literal): ManagedSDD = 
+    if(this.literal == l) this
+    else if(this.literal == !l) vtree.False
+    else super[CachingAssign].assign(l)
     
-  final override def &&(that: ManagedSDD): ManagedSDD = {
-    cache.get(that, () => super.&&(that))
-  }
-    
+  override protected def assign_*(l: Literal): ManagedSDD = 
+    super[ComposableLiteralNode].assign(l)
+  
+}
+
+final class ManagedComplexDecision(
+    val vtree: SDDManagerINode, 
+    val decomp: CompressedXYDecomposition[ManagedSDD]) 
+  extends ManagedDecision 
+  with CachingComposableCircuit[ManagedSDD]{
+  
+  // all decisions of this type are consistent by virtue of the unique nodes cache
+  override def isConsistent = true
+  override def isConsistent(cache: Cache[Boolean]) = isConsistent
+  
 }

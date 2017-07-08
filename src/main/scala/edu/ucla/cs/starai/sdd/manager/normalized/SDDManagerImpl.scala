@@ -21,8 +21,9 @@ import edu.ucla.cs.starai.logic._
 import edu.ucla.cs.starai.util.Child
 import edu.ucla.cs.starai.sdd.manager.GoogleWeakCache
 import edu.ucla.cs.starai.sdd.manager.UniqueNodesCache
+import edu.ucla.cs.starai.sdd.manager.HardCache
 
-abstract class SDDManagerImpl extends SDDManager with Child[SDDManagerImpl]{
+sealed abstract class SDDManagerImpl extends SDDManager with Child[SDDManagerImpl]{
   
 }
 
@@ -30,20 +31,20 @@ object SDDManagerImpl{
   
   def apply(vtree: VTree.Some): SDDManagerImpl = vtree.kind match{
     case Left(leaf) => new SDDManagerLeafImpl(leaf.variable)
-    case Right(inode) => new SDDManagerINodeImpl(
-      SDDManagerImpl(inode.vl), SDDManagerImpl(inode.vr)
-    )
+    case Right(inode) => {
+      new SDDManagerBigINodeImpl(SDDManagerImpl(inode.vl), SDDManagerImpl(inode.vr))
+    }
   }
   
 }
 
-class SDDManagerLeafImpl(_variable: Variable) 
+final class SDDManagerLeafImpl(_variable: Variable) 
   extends { val variable = _variable } 
   with SDDManagerImpl with SDDManagerLeaf{
   
 }
 
-class SDDManagerINodeImpl(val vl: SDDManagerImpl, val vr: SDDManagerImpl) extends {
+final class SDDManagerBigINodeImpl(val vl: SDDManagerImpl, val vr: SDDManagerImpl) extends {
   
     val uniqueNodesCache = new GoogleWeakCache[ManagedSDD]
     

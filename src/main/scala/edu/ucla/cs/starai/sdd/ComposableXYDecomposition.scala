@@ -17,6 +17,9 @@
 package edu.ucla.cs.starai.sdd
 
 import edu.ucla.cs.starai.logic._
+import com.google.common.cache.Cache
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheStats
 import edu.ucla.cs.starai.graph.DoubleLinkedTree
 import edu.ucla.cs.starai.graph.DAG
 import scala.language.existentials

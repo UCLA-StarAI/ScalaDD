@@ -37,16 +37,10 @@ trait SDDManagerLeaf extends SDDManager with VTreeLeaf[SDDManager] {
   
   override def kind = Left(this)
   
-  private abstract class MyTerminal extends {
-    val vtree = SDDManagerLeaf.this
-  } with ManagedTerminal
-  
-  private abstract class MyLiteral(val literal: Literal) extends MyTerminal
-  
-  val True: ManagedTerminal = new MyTerminal with ManagedTrue
-  val False: ManagedTerminal = new MyTerminal with ManagedFalse
-  val posLit: ManagedTerminal = new MyLiteral(variable) with ManagedLiteral
-  val negLit: ManagedTerminal = new MyLiteral(!variable) with ManagedLiteral
+  val True: ManagedTerminal = new ManagedTrueTerminal(this)
+  val False: ManagedTerminal = new ManagedFalseTerminal(this)
+  val posLit: ManagedTerminal = new ManagedLiteralTerminal(this,variable)
+  val negLit: ManagedTerminal = new ManagedLiteralTerminal(this,!variable)
   
   def literal(l: Literal) = {
      if(this.variable == l.variable) {
@@ -75,50 +69,44 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
   override def kind = Right(this)
   
   val uniqueNodesCache: UniqueNodesCache[ManagedSDD]
-  
-  private class MyDecision(val decomp: CompressedXYDecomposition[ManagedSDD]) 
-    extends {
-    val vtree = SDDManagerINode.this
-  } with ManagedDecision 
+  override val numVariables = super.numVariables 
   
   private[this] val trimmablePrimes = Seq(vl.True)
   private[this] val trimmableSubs = Seq(vr.True,vr.False)
   
-  val True: ManagedDecision with ManagedTrue = 
-    new MyDecision(CompressedXYDecomposition(vl.True,vr.True)) 
-      with ManagedTrue with CachedComposition
+  val True = new ManagedTrueDecision(this,CompressedXYDecomposition(vl.True,vr.True))
   uniqueNodesCache.register(True)
       
-  val False: ManagedDecision with ManagedFalse = 
-    new MyDecision(CompressedXYDecomposition(vl.True,vr.False)) 
-      with ManagedFalse with CachedComposition
+  val False = new ManagedFalseDecision(this,CompressedXYDecomposition(vl.True,vr.False))
   uniqueNodesCache.register(False)
       
   override def literal(l: Literal) = literalCache(l)
-      
-  protected val literalCache: Map[Literal,ManagedSDD] = (
-       vl.literals.map{ l => 
-         val decomp = CompressedXYDecomposition(vl.literal(l),vr.True,vl.literal(!l),vr.False)
-         (l-> uniqueNodesCache.getOrBuild(decomp,
-           () => new MyDecision(decomp) 
-                   with ManagedDecisionLiteral with CachedComposition {
-             def literal = l
-           }))
-       } ++ 
-       vr.literals.map{ l => 
-         val decomp = CompressedXYDecomposition(vl.True,vr.literal(l))
-         (l->uniqueNodesCache.getOrBuild(decomp,
-           () => new MyDecision(decomp) 
-                   with ManagedDecisionLiteral with CachedComposition {
-             def literal = l
-           }))
-       }).toMap
   
+  private def literal_*(decomp: CompressedXYDecomposition[ManagedSDD],l: Literal) = 
+    new ManagedLiteralDecision(this,decomp,l)
+      
+  def leftLiterals = vl.literals.map{ l => 
+     val decomp = CompressedXYDecomposition(vl.literal(l),vr.True,vl.literal(!l),vr.False)
+     (l-> uniqueNodesCache.getOrBuild(decomp, () => literal_*(decomp,l)))
+   }
+  
+  def rightLiterals = vr.literals.map{ l => 
+      val decomp = CompressedXYDecomposition(vl.True,vr.literal(l))
+     (l-> uniqueNodesCache.getOrBuild(decomp, () => literal_*(decomp,l)))
+   }
+  
+  protected val literalCache: Map[Literal,ManagedSDD] = 
+    (leftLiterals ++ rightLiterals).toMap
+  
+       
   def partition(decomp: XYDecomposition[ManagedSDD]): ManagedSDD = decomp match {
     case decomp: CompressedXYDecomposition[ManagedSDD] => 
-      uniqueNodesCache.getOrBuild(decomp, () => 
-        new MyDecision(decomp) with CachedComposition)
+      uniqueNodesCache.getOrBuild(decomp, () => partition_*(decomp))
     case _ => ???
+  }
+  
+  private def partition_*(decomp: CompressedXYDecomposition[ManagedSDD]): ManagedSDD = {
+    new ManagedComplexDecision(this,decomp)
   }
   
   def indepConjoin(x: ManagedSDD, y: ManagedSDD): ManagedSDD = {

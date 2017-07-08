@@ -34,7 +34,7 @@ package object util {
    assumes(collection,assumption,(x: T) => x.toString) 
   }
   
-  def assertFalse = assert(false);
+  def assertFalse = assert(false, "Assertions are enabled");
   
   def time[R](task: String)(block: => R): R = {
     val t0 = System.currentTimeMillis()

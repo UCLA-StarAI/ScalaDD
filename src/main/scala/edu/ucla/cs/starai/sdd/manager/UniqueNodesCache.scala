@@ -25,6 +25,7 @@ import edu.ucla.cs.starai.sdd.SDD
 import edu.ucla.cs.starai.util._
 import edu.ucla.cs.starai.sdd.XYDecomposition
 import edu.ucla.cs.starai.sdd.DecisionNode
+import scala.collection._
 
 trait UniqueNodesCache[N <: SDD] {
   
@@ -45,7 +46,9 @@ class GoogleWeakCache[N <: SDD] extends UniqueNodesCache[N] {
   
   private[this] val cache: Cache[XYDecomposition[N],N] = CacheBuilder
     .newBuilder
-    .weakValues()
+    .weakValues
+    .concurrencyLevel(1)
+    .initialCapacity(1028)
     .build()
     
   def getOrBuild(decomp: XYDecomposition[N], build: () => N): N = {
@@ -58,5 +61,19 @@ class GoogleWeakCache[N <: SDD] extends UniqueNodesCache[N] {
   def cacheStats: CacheStats = cache.stats
   
   override def toString = cache.asMap.toString()
+  
+}
+
+class HardCache[N <: SDD] extends UniqueNodesCache[N] {
+    
+  // make sure cache keys cannot reference cache values, or auto-GC is broken!
+  
+  private[this] val cache = mutable.OpenHashMap.empty[XYDecomposition[N],N]
+    
+  def getOrBuild(decomp: XYDecomposition[N], build: () => N): N = {
+    cache.getOrElseUpdate(decomp, build())
+  }
+    
+  def cacheSize: Long = cache.size
   
 }

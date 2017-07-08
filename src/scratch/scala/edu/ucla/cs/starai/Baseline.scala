@@ -19,10 +19,11 @@ package edu.ucla.cs.starai
 import scala.io.Source
 import java.io.File
 import sys.process._
+import edu.ucla.cs.starai.util._
 
 object Baseline extends App {
   
-  val suite = "easy"
+  val suite = "iscas89"
   
   val cnfsPath = getClass.getResource("/cnfs").getPath
   println("CNFs: "+cnfsPath)
@@ -39,7 +40,7 @@ object Baseline extends App {
     println(s"Processing file ${file.getName} in $suite")
     val base: String = file.toString.replaceAll("\\.[^.]*$", "")
     minimized(base)
-    balanced(base)
+//    balanced(base)
     println 
   }
   
@@ -49,18 +50,22 @@ object Baseline extends App {
     println(s"Saving balanced vtree in ${vtree}")
     val cmd = s"sdd -c $base.cnf -W $vtree -r 0 -t balanced -M"
     println("$ " + cmd)
-    val result = (cmd #>> new File(log)).!
+    val result = time("Balanced compilation"){(cmd #>> new File(log)).!}
     require(result==0, s"Failed command: $cmd")
   }
   
   def minimized(base: String){
     val vtree = base+".min.vtree"
-    val log = base+".min.log"
     println(s"Saving minimized vtree in ${vtree}")
     val cmd = s"sdd -c $base.cnf -W $vtree -r 2"
     println("$ " + cmd)
-    val result = (cmd #>> new File(log)).!
+    val result = time("Minimizing compilation"){(cmd #>> new File("/dev/null")).!}
     require(result==0, s"Failed command: $cmd")
+    val cmd2 = s"sdd -c $base.cnf -v $vtree -r 0 -M"
+    println("$ " + cmd2)
+    val log = base+".min.log"
+    val result2 = time("Minimized compilation"){(cmd2 #>> new File(log)).!}
+    require(result2==0, s"Failed command: $cmd2")
   }
   
 }

@@ -45,7 +45,7 @@ case class Clause(literals: Seq[Literal]) extends DimacsCNFLine {
 
 object Clause{
   // it is impossible to match a variable number of groups :-(
-  val Line = """^(.*) 0""".r 
+  val Line = """^(.+) 0""".r 
 }
 
 case class DimacsCNF(lines: Seq[DimacsCNFLine]) {
@@ -107,7 +107,10 @@ object DimacsIO {
           val lits: Seq[Literal] = ints.split(" ").map{str => new Literal(str.toInt)}
           Clause(lits)
         }
-        case _ => throw new IllegalArgumentException(s"Cannot parse line: $line")
+        case _ => {
+          println(s"Warning: cannot parse line, treating it as a comment: $line")
+          Comment(line)
+        }
       }
     }.toList
     file.close
