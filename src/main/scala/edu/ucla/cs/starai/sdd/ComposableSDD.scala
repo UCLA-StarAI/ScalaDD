@@ -159,11 +159,12 @@ trait ComposableDecisionNode[N <: ComposableSDD[N]] extends DecisionNode[N] with
    */
   // TODO optimize for decompositions of size 1 and 2
   override def &&(that: N): N = {
+    // don't use SDD.kind here, its performance isn't good enough
     assume(!this.isInstanceOf[FastComposable[_]], "FastComposables must override conjoin")
-    that.kind match{
-      case Left(terminal) => terminal && this
-      case Right(decision: FastComposable[N]) => decision && this
-      case Right(decision) => {
+    that match{
+      case terminal: ComposableTerminal[N] => terminal && this
+      case decision: FastComposable[N] => decision && this
+      case decision: ComposableDecisionNode[N] with N @unchecked => {
         if(hashCode < decision.hashCode()) this conjoinDecision decision
         else decision conjoinDecision this
       }

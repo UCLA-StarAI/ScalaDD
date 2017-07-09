@@ -95,8 +95,6 @@ class TreeCompiler(
         if(verbose>0) println(s"(${(i*100)/numClauses}%, size ${cnfX.sddSize},${cnfY.sddSize}) Compiling aggregate CNF ")
         var cnfXY = inode.indepConjoin(cnfX,cnfY)
         val relevantClauses = removeRelevantClauses(inode)
-//        val largeChildVars = if (cnfX.sddSize < cnfY.sddSize) cnfX.vtree.variables 
-//                           else cnfY.vtree.variables
         val sortedClauses = if(useOrderHeuristic){ 
           val depths = relevantClauses.flatMap(_.variables).toSet
                         .map{ v: Variable => (v -> inode.depth(v))}.toMap

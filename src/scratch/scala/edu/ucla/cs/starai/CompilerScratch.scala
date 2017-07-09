@@ -43,11 +43,9 @@ object CompilerScratch extends App {
   val vtree = vtreeParser.parse(Source.fromResource(s"cnfs/$suite/$benchmark.$vtreeType.vtree"))
   
 //  val compiler = new NaiveCompiler
-  val compiler = new TreeCompiler
+  val compiler = new TreeCompiler(1,true)
   
   val sdd = time("Compilation"){compiler.compile(cnf, vtree)}
-  // 76 75 90 88
-  // 47 47
 
 //  println(s"Number of variables = ${cnf.numVars}")
 //  println(s"Number of clauses = ${cnf.numClauses}")

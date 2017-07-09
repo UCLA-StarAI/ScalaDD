@@ -61,13 +61,13 @@ trait CachingConjoinDecision[N <: ComposableSDD[N]] extends ComposableDecisionNo
   
   self: N =>
     
-  private[this] val andCache = CachingConjoinDecision.cacheBuilder.build(
+  private[this] val conjoinDecisionCache = CachingConjoinDecision.cacheBuilder.build(
     new CacheLoader[ComposableDecisionNode[N] with N,N](){
       def load(that: ComposableDecisionNode[N] with N) = conjoinDecision_*(that)
     })
     
   override protected def conjoinDecision(that: ComposableDecisionNode[N] with N): N = {
-    andCache.get(that)
+    conjoinDecisionCache.get(that)
   }
   
   protected def conjoinDecision_*(that: ComposableDecisionNode[N] with N): N = {
