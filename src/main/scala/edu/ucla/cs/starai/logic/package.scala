@@ -47,5 +47,5 @@ package object logic {
   }
   
   implicit def variable2Literal(v: Variable): Literal = v.toLiteral
-    
+  
 }

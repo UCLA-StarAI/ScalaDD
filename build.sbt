@@ -7,6 +7,7 @@ lazy val root = (project in file(".")).
     )),
     name := "ScalaDD",
     unmanagedSourceDirectories in Compile += baseDirectory.value / "src" / "scratch" / "scala",
+    scalacOptions += "-Xmixin-force-forwarders:false -Ydelambdafy:inline -Yopt-inline-heuristics:everything",
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % Test,
     libraryDependencies += "com.google.guava" % "guava" % "22.0",
     EclipseKeys.withSource := true,

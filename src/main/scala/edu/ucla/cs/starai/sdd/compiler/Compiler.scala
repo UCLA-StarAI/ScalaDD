@@ -18,11 +18,18 @@ package edu.ucla.cs.starai.sdd.compiler
 
 import edu.ucla.cs.starai.logic.Clause
 import edu.ucla.cs.starai.logic.DimacsCNF
-import edu.ucla.cs.starai.logic.VTree
+import edu.ucla.cs.starai.logic._
+import edu.ucla.cs.starai.util._
 import edu.ucla.cs.starai.sdd.manager.normalized.ManagedSDD
 import edu.ucla.cs.starai.sdd.manager.normalized.SDDManagerINode
 import edu.ucla.cs.starai.sdd.manager.normalized.SDDManagerLeaf
 import edu.ucla.cs.starai.sdd.manager.normalized.SDDManager
+import edu.ucla.cs.starai.sdd.ComposableLiteralNode
+import com.google.common.collect.Multiset
+import com.google.common.collect.Multisets
+import com.google.common.collect.HashMultiset
+import scala.collection.mutable.ListBuffer
+
 
 trait Compiler {
   
@@ -56,7 +63,10 @@ class NaiveCompiler(val verbose: Int = 1) extends Compiler {
   
 }
 
-class TreeCompiler(val verbose: Int = 1) extends Compiler {
+class TreeCompiler(
+    val verbose: Int = 1, 
+    val useOrderHeuristic: Boolean = true) 
+    extends Compiler {
   
   override def compile(cnf: DimacsCNF, mgr: SDDManager): ManagedSDD = {
     
@@ -83,14 +93,23 @@ class TreeCompiler(val verbose: Int = 1) extends Compiler {
         val cnfX = childCnfs(0)
         val cnfY = childCnfs(1)
         if(verbose>0) println(s"(${(i*100)/numClauses}%, size ${cnfX.sddSize},${cnfY.sddSize}) Compiling aggregate CNF ")
-        val cnfXY = inode.indepConjoin(cnfX,cnfY)
-        val myCnf = removeRelevantClauses(inode).foldLeft[ManagedSDD](cnfXY){
-          (cnf,cl) => 
-            i = i+1
-            if(verbose>0) println(s"(${(i*100)/numClauses}%, size ${cnf.sddSize}) Compiling clause $cl ")
-            (cnf && compileClause(cl,inode))
+        var cnfXY = inode.indepConjoin(cnfX,cnfY)
+        val relevantClauses = removeRelevantClauses(inode)
+//        val largeChildVars = if (cnfX.sddSize < cnfY.sddSize) cnfX.vtree.variables 
+//                           else cnfY.vtree.variables
+        val sortedClauses = if(useOrderHeuristic){ 
+          val depths = relevantClauses.flatMap(_.variables).toSet
+                        .map{ v: Variable => (v -> inode.depth(v))}.toMap
+          relevantClauses.sortBy{c: Clause =>
+            c.variables.toSeq.map(depths(_)).sorted.reverse
+          }(scala.math.Ordering.Implicits.seqDerivedOrdering)
+        } else relevantClauses
+        for(clause <- sortedClauses){
+          i = i+1
+          if(verbose>0) println(s"(${(i*100)/numClauses}%, size ${cnfXY.sddSize}) Compiling clause $clause")
+          cnfXY = (cnfXY && compileClause(clause,inode))
         }
-        myCnf
+        cnfXY
       }
     }
     // decorate output in case one expects a normalized SDD for the root

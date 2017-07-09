@@ -40,6 +40,7 @@ object PLine{
 case class Clause(literals: Seq[Literal]) extends DimacsCNFLine {
   def isTautology = literals.exists { v => literals.contains { !v } }
   def variables = literals.map(_.variable).toSet
+  def length = literals.size
   override def toString = literals.map{_.toInt}.mkString(" ") + " 0"
 }
 
@@ -61,6 +62,11 @@ case class DimacsCNF(lines: Seq[DimacsCNFLine]) {
   
   def isTautology = clauseLines.forall { _.isTautology }
 
+  def simplify(fraction: Double) = {
+    val header = PLine(numVars,(numClauses*fraction).toInt)
+    DimacsCNF(header +: clauseLines.take(header.numClauses))
+  }
+  
   override def toString = lines.mkString("\n")
 
 }

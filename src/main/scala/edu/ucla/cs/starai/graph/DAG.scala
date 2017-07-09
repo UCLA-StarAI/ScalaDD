@@ -58,4 +58,10 @@ trait DAG[+N <: DAG[N]] extends Graph[N] with SelfTraversable[N] with Caching[DA
     count
   }
   
+  /**
+   * Does this graph contain the given subgraph?
+   * Takes any graph in order to covariant in N
+   */
+  def containsNode[M >: N <: DAG[_]](node: M): Boolean = exists { node == _ }
+  
 }

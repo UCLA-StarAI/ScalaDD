@@ -76,6 +76,12 @@ package object util {
       x.zip(y) flatMap { case (a, b) => Seq(a, b) }
     }
 
+    def nthMaxBy[B](n:Int,f: T => B)(implicit cmp: Ordering[B]): T = {
+      if(x.isEmpty) throw new IllegalArgumentException
+      val max = x.maxBy(f)(cmp)
+      if(n == 0) max
+      else x.filter(_ != max).nthMaxBy(n-1,f)(cmp)
+    }
     
   }
   

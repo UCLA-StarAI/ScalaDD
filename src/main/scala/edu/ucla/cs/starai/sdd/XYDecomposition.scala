@@ -21,6 +21,7 @@ import edu.ucla.cs.starai.logic
 import edu.ucla.cs.starai.logic._
 import edu.ucla.cs.starai.util._
 import scala.language.existentials
+import scala.collection._
 import scala.math.BigInt.int2bigInt
 import scala.util.hashing.MurmurHash3
 
@@ -34,7 +35,7 @@ trait XYDecomposition[+N <: SDD] extends Caching[DAG[_]]{
   
   def size = elements.size
           
-  def isConsistent(cache: Cache[Boolean]) = elements.exists(_.isConsistent(cache))
+  def isConsistent = elements.exists(_.isConsistent)
   
   def isSubTrimmableFirst = (size == 2 && elements(0).sub.isValid && !elements(1).sub.isConsistent)
   def isSubTrimmableSecond = (size == 2 && elements(1).sub.isValid && !elements(0).sub.isConsistent)
@@ -44,6 +45,8 @@ trait XYDecomposition[+N <: SDD] extends Caching[DAG[_]]{
   
   def modelRatio(cache: Cache[BigRational]) = elements.map(_.modelRatio(cache)).sum
 
+  def entailedLiterals = elements.map(_.entailedLiterals).reduce(_ intersect _)
+  
   override def toString = elements.mkString("XY{", ", ", "}")
   
   override lazy val hashCode = {
@@ -70,9 +73,7 @@ trait Element[+N <: SDD] extends Caching[DAG[_]] {
   
   assume(prime.isConsistent)
   
-  def isConsistent: Boolean = isConsistent(emptyCache)
-  def isConsistent(cache: Cache[Boolean]): Boolean = 
-    prime.isConsistent(cache) && sub.isConsistent(cache)
+  def isConsistent = prime.isConsistent && sub.isConsistent
   
   def modelRatio(cache: Cache[BigRational]) = prime.modelRatio(cache) * sub.modelRatio(cache)
   
@@ -80,6 +81,9 @@ trait Element[+N <: SDD] extends Caching[DAG[_]] {
   
   def children: Seq[N] = Seq(prime,sub)
 
+  def entailedLiterals: immutable.Set[Literal] = 
+    prime.entailedLiterals union sub.entailedLiterals
+  
   override def toString = s"[$prime,$sub]"
 
   final override lazy val hashCode = {

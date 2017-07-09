@@ -51,8 +51,8 @@ trait DoubleLinkedTree[+N <: DoubleLinkedTree[N]] extends Tree[N] {
     // prefer exception over option return type here
     def lca[U >: N <: DoubleLinkedTree[U]](that: U): U = {
       if(this == that) this
-      else if(this.contains(that)) this
-      else if (that.contains(this)) that.asSelf
+      else if(this.containsNode(that)) this
+      else if (that.containsNode(this)) that.asSelf
       else {
         val thisParents = this.ancestors.toSet[U]
         for(parent <- that.ancestors)

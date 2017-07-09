@@ -27,7 +27,7 @@ import com.google.common.cache.CacheLoader
 /**
  * A normalized compressed SDD that is managed by its VTree
  */
-sealed abstract class ManagedSDD extends Circuit[ManagedSDD]
+sealed trait ManagedSDD extends Circuit[ManagedSDD]
   with ComposableSDD[ManagedSDD] 
   with Normalized with Compressed[ManagedSDD]{
   
@@ -90,7 +90,10 @@ final class ManagedLiteralDecision(
     val decomp: CompressedXYDecomposition[ManagedSDD],
     val literal: Literal) 
   extends ManagedDecision with ComposableLiteralNode[ManagedSDD]
-  with CachingAssign[ManagedSDD]{
+  with CachingAssign[ManagedSDD]
+  with CachingNegation[ManagedSDD]{
+  
+  override protected def unary_!* = super[ComposableLiteralNode].unary_!
   
   override def assign(l: Literal): ManagedSDD = 
     if(this.literal == l) this
@@ -100,16 +103,27 @@ final class ManagedLiteralDecision(
   override protected def assign_*(l: Literal): ManagedSDD = 
     super[ComposableLiteralNode].assign(l)
   
+  // caching conjoin here slows things down!
+    
 }
 
 final class ManagedComplexDecision(
     val vtree: SDDManagerINode, 
     val decomp: CompressedXYDecomposition[ManagedSDD]) 
-  extends ManagedDecision 
+  extends ManagedDecision
   with CachingComposableCircuit[ManagedSDD]{
   
   // all decisions of this type are consistent by virtue of the unique nodes cache
   override def isConsistent = true
-  override def isConsistent(cache: Cache[Boolean]) = isConsistent
+  
+  override lazy val entailedLiterals = super.entailedLiterals
+  
+//  override protected def &&*(that: ManagedSDD): ManagedSDD = 
+//    super[ComposableDecisionNode].&&(that)
+//    
+//  override protected def assign_*(l: Literal): ManagedSDD = 
+//    super[ComposableDecisionNode].assign(l)
+//  
+//  override protected def unary_!* = super[ComposableDecisionNode].unary_!
   
 }

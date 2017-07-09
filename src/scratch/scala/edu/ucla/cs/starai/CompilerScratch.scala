@@ -30,7 +30,7 @@ object CompilerScratch extends App {
   val vtreeParser = new VTreeParser(1)
   
   val suite = "iscas89"
-  val benchmark = "s510.scan" 
+  val benchmark = "s832.scan" 
   
 //  val suite = "easy"
 //  val benchmark = "count_mince" 
@@ -39,6 +39,7 @@ object CompilerScratch extends App {
 //  val vtreeType = "balanced"
   
   val cnf = DimacsIO.parse(Source.fromResource(s"cnfs/$suite/$benchmark.cnf"))
+              .simplify(0.51)
   val vtree = vtreeParser.parse(Source.fromResource(s"cnfs/$suite/$benchmark.$vtreeType.vtree"))
   
 //  val compiler = new NaiveCompiler

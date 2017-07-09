@@ -37,12 +37,7 @@ trait CachingAssign[N <: ComposableCircuit[N]] extends ComposableCircuit[N] {
   
   self: N =>
     
-  private[this] val assignCache = CacheBuilder
-    .newBuilder
-    .softValues
-    .concurrencyLevel(1)
-    .initialCapacity(128)
-    .build[Integer,N]()
+  private[this] val assignCache = CachingAssign.cacheBuilder.build[Integer,N]()
   
   override abstract def assign(l: Literal): N = {
     assignCache.get(l.toInt,() => assign_*(l))
@@ -52,23 +47,39 @@ trait CachingAssign[N <: ComposableCircuit[N]] extends ComposableCircuit[N] {
   
 }
 
+object CachingAssign{
+  
+  val cacheBuilder = CacheBuilder
+    .newBuilder
+    .softValues
+    .concurrencyLevel(1)
+    .initialCapacity(128)
+  
+}
+
 trait CachingConjoin[N <: ComposableCircuit[N]] extends ComposableCircuit[N] {
   
   self: N =>
     
-  private[this] val andCache = CacheBuilder
-    .newBuilder
-    .weakKeys
-    .softValues
-    .concurrencyLevel(1)
-    .initialCapacity(128)
-    .build(new CacheLoader[N,N](){
+  private[this] val andCache = CachingConjoin.cacheBuilder.build(
+    new CacheLoader[N,N](){
       def load(that: N) = &&*(that)
     })
     
   override def &&(that: N): N = andCache.get(that)
   
   protected def &&*(that: N): N = super.&&(that)
+  
+}
+
+object CachingConjoin{
+  
+  val cacheBuilder = CacheBuilder
+    .newBuilder
+    .weakKeys
+    .softValues
+    .concurrencyLevel(1)
+    .initialCapacity(128)
   
 }
 

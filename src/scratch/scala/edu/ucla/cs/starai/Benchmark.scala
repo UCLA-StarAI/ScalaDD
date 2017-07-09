@@ -20,10 +20,18 @@ import scala.io.Source
 import java.io.File
 import sys.process._
 import edu.ucla.cs.starai.util._
+import edu.ucla.cs.starai.sdd.compiler.TreeCompiler
+import edu.ucla.cs.starai.logic.io.VTreeParser
+import edu.ucla.cs.starai.logic.DimacsIO
 
-object Baseline extends App {
+object BenchMark extends App {
   
   val suite = "iscas89"
+//  val suite = "easy"
+  val vtreeType = "min"
+  
+  val vtreeParser = new VTreeParser(0)
+  val sddCompiler = new TreeCompiler(0)
   
   val cnfsPath = getClass.getResource("/cnfs").getPath
   println("CNFs: "+cnfsPath)
@@ -39,33 +47,18 @@ object Baseline extends App {
   for(file <- files.filter(_.toString.endsWith(".cnf")).sortBy(_.length())){
     println(s"Processing file ${file.getName} in $suite")
     val base: String = file.toString.replaceAll("\\.[^.]*$", "")
-    minimized(base)
-//    balanced(base)
+    if((new File(s"$base.$vtreeType.vtree")).exists()){
+      benchmark(base)
+    }else println(s"No vtree available named '$base.$vtreeType.vtree'")
     println 
   }
   
-  def balanced(base: String){
-    val vtree = base+".balanced.vtree"
-    val log = base+".balanced.log"
-    println(s"Saving balanced vtree in ${vtree}")
-    val cmd = s"sdd -c $base.cnf -W $vtree -r 0 -t balanced -M"
-    println("$ " + cmd)
-    val result = time("Balanced compilation"){(cmd #> new File(log)).!}
-    require(result==0, s"Failed command: $cmd")
-  }
-  
-  def minimized(base: String){
-    val vtree = base+".min.vtree"
-    println(s"Saving minimized vtree in ${vtree}")
-    val log = base+".min.log"
-    val cmd = s"sdd -c $base.cnf -W $vtree -r 2"
-    println("$ " + cmd)
-    val result = time("Minimizing compilation"){(cmd #> new File(log)).!}
-    require(result==0, s"Failed command: $cmd")
-    val cmd2 = s"sdd -c $base.cnf -v $vtree -r 0 -M"
-    println("$ " + cmd2)
-    val result2 = time("Minimized compilation"){(cmd2 #> new File(log)).!}
-    require(result2==0, s"Failed command: $cmd2")
+  def benchmark(base: String){
+    //println(s"Parsing $base.cnf")
+    val cnf = DimacsIO.parse(Source.fromFile(s"$base.cnf"))
+    //println(s"Parsing $base.$vtreeType.vtree")
+    val vtree = vtreeParser.parse(Source.fromFile(s"$base.$vtreeType.vtree"))
+    val sdd = time("Compilation"){sddCompiler.compile(cnf, vtree)}
   }
   
 }

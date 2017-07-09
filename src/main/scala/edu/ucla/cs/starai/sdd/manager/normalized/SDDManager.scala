@@ -19,6 +19,10 @@ package edu.ucla.cs.starai.sdd.manager.normalized
 import edu.ucla.cs.starai.logic._
 import edu.ucla.cs.starai.sdd._
 import edu.ucla.cs.starai.sdd.manager.UniqueNodesCache
+import com.google.common.cache.CacheBuilder
+import com.google.common.collect.ImmutableMap
+import scala.collection._
+import scala.collection.immutable.IntMap
 
 
 trait SDDManager extends VTree[SDDManager] with BuilderVTree[ManagedSDD]{
@@ -44,8 +48,7 @@ trait SDDManagerLeaf extends SDDManager with VTreeLeaf[SDDManager] {
   
   def literal(l: Literal) = {
      if(this.variable == l.variable) {
-       if(l.isPositive) posLit
-       else negLit
+       if(l.isPositive) posLit else negLit
      }else throw new IllegalArgumentException(s"$this cannot build literal $l, only for $variable")
   }
   
@@ -79,25 +82,28 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
       
   val False = new ManagedFalseDecision(this,CompressedXYDecomposition(vl.True,vr.False))
   uniqueNodesCache.register(False)
-      
-  override def literal(l: Literal) = literalCache(l)
+     
+  private def buildLiteral(l: Literal): ManagedSDD = {
+    val v: Variable = l.variable
+    if(this.containsVar(v)){
+       val decomp = if(vl.containsVar(v))
+           CompressedXYDecomposition(vl.literal(l),vr.True,vl.literal(!l),vr.False)
+         else
+           CompressedXYDecomposition(vl.True,vr.literal(l))
+       uniqueNodesCache.getOrBuild(decomp, () => literal_*(decomp,l))
+     }else throw new IllegalArgumentException(s"$this does not contain $l")
+  }
+  
+  private[this] val literalCache = 
+    IntMap(literals.map(l => (l.toInt -> buildLiteral(l))).toSeq: _*)
+  
+  override def literal(l: Literal) = {
+    assume(literalCache.contains(l.toInt), s"$l is not managed by $this")
+    literalCache(l.toInt)
+  }
   
   private def literal_*(decomp: CompressedXYDecomposition[ManagedSDD],l: Literal) = 
     new ManagedLiteralDecision(this,decomp,l)
-      
-  def leftLiterals = vl.literals.map{ l => 
-     val decomp = CompressedXYDecomposition(vl.literal(l),vr.True,vl.literal(!l),vr.False)
-     (l-> uniqueNodesCache.getOrBuild(decomp, () => literal_*(decomp,l)))
-   }
-  
-  def rightLiterals = vr.literals.map{ l => 
-      val decomp = CompressedXYDecomposition(vl.True,vr.literal(l))
-     (l-> uniqueNodesCache.getOrBuild(decomp, () => literal_*(decomp,l)))
-   }
-  
-  protected val literalCache: Map[Literal,ManagedSDD] = 
-    (leftLiterals ++ rightLiterals).toMap
-  
        
   def partition(decomp: XYDecomposition[ManagedSDD]): ManagedSDD = decomp match {
     case decomp: CompressedXYDecomposition[ManagedSDD] => 
@@ -112,10 +118,10 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
   def indepConjoin(x: ManagedSDD, y: ManagedSDD): ManagedSDD = {
     assume(x.vtree!=this)
     assume(y.vtree!=this)
-    assume(this.contains(x.vtree))
-    assume(this.contains(x.vtree))
-    val xleft = vl.contains(x.vtree) 
-    val yleft = vl.contains(y.vtree) 
+    assume(this.containsNode(x.vtree))
+    assume(this.containsNode(x.vtree))
+    val xleft = vl.containsNode(x.vtree) 
+    val yleft = vl.containsNode(y.vtree) 
     if(xleft && !yleft){
       partition(CompressedXYDecomposition(x,y,!x,vr.False))
     }else if(!xleft && yleft){
@@ -130,12 +136,12 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
   def normalize(sdd: ManagedSDD): ManagedSDD = {
     if(sdd.vtree == this) {
       return sdd
-    } else if(!this.contains(sdd.vtree)){
+    } else if(!this.containsNode(sdd.vtree)){
       throw new IllegalArgumentException(s"$this cannot build sdds for other managers")
-    } else if(vl.contains(sdd.vtree)){
+    } else if(vl.containsNode(sdd.vtree)){
       normalizeLeft(sdd)
     }else{
-      assume(vr.contains(sdd.vtree))
+      assume(vr.containsNode(sdd.vtree))
       normalizeRight(sdd)
     }
   }
@@ -144,7 +150,6 @@ trait SDDManagerINode extends SDDManager with VTreeINode[SDDManager] {
     val sddLeft = vl.normalize(sdd)
     partition(CompressedXYDecomposition(sddLeft,vr.True,!sddLeft,vr.False))
   }
-      
   
   def normalizeRight(sdd: ManagedSDD) = 
       partition(CompressedXYDecomposition(vl.True,vr.normalize(sdd)))
