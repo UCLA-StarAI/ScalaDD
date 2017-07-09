@@ -163,7 +163,10 @@ trait ComposableDecisionNode[N <: ComposableSDD[N]] extends DecisionNode[N] with
     that.kind match{
       case Left(terminal) => terminal && this
       case Right(decision: FastComposable[N]) => decision && this
-      case Right(decision) => this conjoinDecision decision
+      case Right(decision) => {
+        if(hashCode < decision.hashCode()) this conjoinDecision decision
+        else decision conjoinDecision this
+      }
     }}
       
   protected def conjoinDecision(that: ComposableDecisionNode[N] with N): N = {

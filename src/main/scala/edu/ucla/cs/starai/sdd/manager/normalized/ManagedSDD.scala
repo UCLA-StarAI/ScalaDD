@@ -111,19 +111,12 @@ final class ManagedComplexDecision(
     val vtree: SDDManagerINode, 
     val decomp: CompressedXYDecomposition[ManagedSDD]) 
   extends ManagedDecision
-  with CachingComposableCircuit[ManagedSDD]{
+  with CachingAssign[ManagedSDD]
+  with CachingNegation[ManagedSDD]
+  with CachingConjoinDecision[ManagedSDD]{
   
   // all decisions of this type are consistent by virtue of the unique nodes cache
   override def isConsistent = true
   
-  override lazy val entailedLiterals = super.entailedLiterals
-  
-//  override protected def &&*(that: ManagedSDD): ManagedSDD = 
-//    super[ComposableDecisionNode].&&(that)
-//    
-//  override protected def assign_*(l: Literal): ManagedSDD = 
-//    super[ComposableDecisionNode].assign(l)
-//  
-//  override protected def unary_!* = super[ComposableDecisionNode].unary_!
   
 }

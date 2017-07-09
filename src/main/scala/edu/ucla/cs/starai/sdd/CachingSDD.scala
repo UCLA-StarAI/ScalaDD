@@ -57,22 +57,26 @@ object CachingAssign{
   
 }
 
-trait CachingConjoin[N <: ComposableCircuit[N]] extends ComposableCircuit[N] {
+trait CachingConjoinDecision[N <: ComposableSDD[N]] extends ComposableDecisionNode[N] {
   
   self: N =>
     
-  private[this] val andCache = CachingConjoin.cacheBuilder.build(
-    new CacheLoader[N,N](){
-      def load(that: N) = &&*(that)
+  private[this] val andCache = CachingConjoinDecision.cacheBuilder.build(
+    new CacheLoader[ComposableDecisionNode[N] with N,N](){
+      def load(that: ComposableDecisionNode[N] with N) = conjoinDecision_*(that)
     })
     
-  override def &&(that: N): N = andCache.get(that)
+  override protected def conjoinDecision(that: ComposableDecisionNode[N] with N): N = {
+    andCache.get(that)
+  }
   
-  protected def &&*(that: N): N = super.&&(that)
+  protected def conjoinDecision_*(that: ComposableDecisionNode[N] with N): N = {
+    super.conjoinDecision(that)
+  }
   
 }
 
-object CachingConjoin{
+object CachingConjoinDecision{
   
   val cacheBuilder = CacheBuilder
     .newBuilder
@@ -81,13 +85,6 @@ object CachingConjoin{
     .concurrencyLevel(1)
     .initialCapacity(128)
   
-}
-
-trait CachingComposableCircuit[N <: ComposableCircuit[N]] 
-  extends CachingNegation[N] with CachingAssign[N] with CachingConjoin[N] {
-  
-  self: N =>
-    
 }
 
 
