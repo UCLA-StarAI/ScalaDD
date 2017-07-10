@@ -24,6 +24,9 @@ import edu.ucla.cs.starai.graph.DoubleLinkedTree
 import edu.ucla.cs.starai.graph.DAG
 import scala.language.existentials
 
+/**
+ * These are not implemented here because they are likely to require specialized implementations anyway
+ */
 trait ComposableXYDecomposition[N <: ComposableSDD[N]] extends XYDecomposition[N]{
 
   // do not refer back to SDD nodes or manager that could refer to this object
@@ -33,30 +36,17 @@ trait ComposableXYDecomposition[N <: ComposableSDD[N]] extends XYDecomposition[N
   //TODO consider sorting elements and associating a designated unique nodes and apply cache with the first prime!
   
   def elements: Seq[ComposableElement[N]]
+    
+  def mapPrimes(f: N => N): ComposableXYDecomposition[N] 
   
-  def +(prime:N, sub: N): ComposableXYDecomposition[N] = {
-    if(prime.isConsistent) new MyDecomp(new ComposableElementImpl(prime,sub) +: elements)
-    else this
-  }
+  def mapPrimes(f: N => N, extraPrime:N, extraSub: N): ComposableXYDecomposition[N] 
   
-  def mapPrimes(f: N => N): ComposableXYDecomposition[N] = {
-    new MyDecomp(elements.map(_.mapPrime(f)).flatten)
-  }
+  def mapSubs(f: N => N): ComposableXYDecomposition[N] 
   
-  def mapSubs(f: N => N): ComposableXYDecomposition[N] = {
-    new MyDecomp(elements.map(_.mapSub(f)))
-  }
-  
-  def &&(that: ComposableXYDecomposition[N]): ComposableXYDecomposition[N] = {
-    val elemConjoin = for(e1 <- this.elements; e2 <- that.elements) yield e1 && e2
-    val elems = elemConjoin.flatten
-    new MyDecomp(elems)
-  }
+  def &&(that: ComposableXYDecomposition[N]): ComposableXYDecomposition[N]
   
   // specialize instead of using mapSubs because negation cannot undo compression
-  def unary_! = mapSubs(!_)
-  
-  private class MyDecomp(val elements: Seq[ComposableElement[N]]) extends ComposableXYDecomposition[N]
+  def unary_!(): ComposableXYDecomposition[N]
   
 }
 

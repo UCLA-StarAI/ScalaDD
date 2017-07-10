@@ -50,10 +50,9 @@ trait CompressedXYDecomposition[N <: Compressed[N]]
   
   assume(subsCache.size == elements.size, "Compressed SDDs cannot have repeated subs, or missing cached subs")
   
-  // specialized for performance
-  private def removeSub(sub: N): (N,List[ComposableElement[N]]) = {
+  private def removeSub(sub: N, myElements: List[ComposableElement[N]] = elements): (N,List[ComposableElement[N]]) = {
     val prefix = new ListBuffer[ComposableElement[N]]
-    var remainder = elements
+    var remainder = myElements
     while (!remainder.isEmpty) {
       val head = remainder.head
       remainder = remainder.tail
@@ -62,19 +61,7 @@ trait CompressedXYDecomposition[N <: Compressed[N]]
       else
         prefix += head    
     }
-    throw new IllegalArgumentException(s"$sub should be part of $elements")
-  }
-  
-  override def +(prime:N, sub: N): CompressedXYDecomposition[N] = {
-    if(prime.isConsistent) {
-      if(subsCache.contains(sub)){
-        val (oldPrime,remainder) = removeSub(sub)
-        val newElement = new ComposableElementImpl(oldPrime || prime,sub)
-        new CompressedXYDecompositionImpl(newElement :: remainder, subsCache)
-      }else{
-        new CompressedXYDecompositionImpl(new ComposableElementImpl(prime,sub) :: elements, subsCache + sub)
-      }
-    }else this
+    throw new IllegalArgumentException(s"$sub should be part of $myElements")
   }
   
   override def mapPrimes(f: N => N): CompressedXYDecomposition[N] = {
@@ -89,12 +76,33 @@ trait CompressedXYDecomposition[N <: Compressed[N]]
     new CompressedXYDecompositionImpl(newElements,subsCache -- removedSubs)
   }
   
+  override def mapPrimes(f: N => N, extraPrime:N, extraSub: N): ComposableXYDecomposition[N] = {
+    if(extraPrime.isConsistent) {
+      var removedSubs: List[N] = Nil
+      var newElements: List[ComposableElement[N]] = Nil
+      for(elem <- elements){
+        elem.mapPrime(f) match {
+          case None => removedSubs = elem.sub :: removedSubs
+          case Some(fe) => newElements = fe :: newElements 
+        }
+      }
+      val newSubsCache = subsCache -- removedSubs
+      if(newSubsCache.contains(extraSub)){
+        val (oldPrime,remainder) = removeSub(extraSub,newElements)
+        val newElement = new ComposableElementImpl(oldPrime || extraPrime,extraSub)
+        new CompressedXYDecompositionImpl(newElement :: remainder, newSubsCache)
+      }else{
+        new CompressedXYDecompositionImpl(
+            new ComposableElementImpl(extraPrime,extraSub) :: newElements, newSubsCache + extraSub)
+      }
+    }else mapPrimes(f)
+  }
   
   override def mapSubs(f: N => N): CompressedXYDecomposition[N] = {
     compress(elements.map(_.mapSub(f)))
   }
   
-  def compress(elems: List[ComposableElement[N]]): CompressedXYDecomposition[N] = {
+  private def compress(elems: List[ComposableElement[N]]): CompressedXYDecomposition[N] = {
     val subMap = mutable.Map.empty[N,ComposableElement[N]]
     for(elem <- elems) {
       val newElement = subMap.get(elem.sub) match{
@@ -120,14 +128,14 @@ trait CompressedXYDecomposition[N <: Compressed[N]]
   }
   
   // avoids unnecessary compression on negation
-  override def unary_! = {
+  def unary_! = {
     val negElements = elements.map(_.mapSub(!_))
     new CompressedXYDecompositionImpl(negElements,subsCache.map(!_))
   }
   
 }
 
-class CompressedXYDecompositionImpl[N <: Compressed[N]] (
+final class CompressedXYDecompositionImpl[N <: Compressed[N]] (
   val elements: List[ComposableElement[N]], 
   val subsCache: immutable.Set[N])
   extends CompressedXYDecomposition[N]

@@ -149,7 +149,7 @@ trait ComposableDecisionNode[N <: ComposableSDD[N]] extends DecisionNode[N] with
   @inline
   protected def assignLeft(l: Literal) = {
     val lit = vtree.vl.literal(l)
-    vtree.partition(decomp.mapPrimes(_ assign l) + (!lit, vtree.vr.False))
+    vtree.partition(decomp.mapPrimes(_ assign l, !lit, vtree.vr.False))
   }
   
   @inline protected def assignRight(l: Literal) =  vtree.partition(decomp.mapSubs(_ assign l))
@@ -182,7 +182,7 @@ trait ComposableDecisionNode[N <: ComposableSDD[N]] extends DecisionNode[N] with
    */
   protected def conjoinBelow(that: ComposableDecisionNode[N] with N): N = {
     if(this.vtree.vl containsNode that.vtree){
-       this.vtree.partition(decomp.mapPrimes(_ && that) + (!that, vtree.vr.False))
+       this.vtree.partition(decomp.mapPrimes(_ && that, !that, vtree.vr.False))
     }else{
        assume(this.vtree.vr containsNode that.vtree)
        this.vtree.partition(decomp.mapSubs(_ && that))
