@@ -46,7 +46,7 @@ trait CompressedXYDecomposition[N <: Compressed[N]]
   /**
    * A map from subs to their element
    */
-  val subsCache: immutable.Set[N]
+  val subsCache: Set[N]
   
   assume(subsCache.size == elements.size, "Compressed SDDs cannot have repeated subs, or missing cached subs")
   
@@ -104,7 +104,10 @@ trait CompressedXYDecomposition[N <: Compressed[N]]
   
   private def compress(elems: List[ComposableElement[N]]): CompressedXYDecomposition[N] = {
     val subMap = mutable.Map.empty[N,ComposableElement[N]]
-    for(elem <- elems) {
+    var remaining = elems
+    while(remaining.nonEmpty) {
+      val elem = remaining.head
+      remaining = remaining.tail
       val newElement = subMap.get(elem.sub) match{
         case None => elem
         case Some(existingElem) => 
@@ -128,16 +131,26 @@ trait CompressedXYDecomposition[N <: Compressed[N]]
   }
   
   // avoids unnecessary compression on negation
+  // implemented for performance
   def unary_! = {
-    val negElements = elements.map(_.mapSub(!_))
-    new CompressedXYDecompositionImpl(negElements,subsCache.map(!_))
+    var newElements: List[ComposableElement[N]] = Nil
+    val newSubs = mutable.Set.empty[N]
+    var remaining = elements
+    while(remaining.nonEmpty) {
+      val elem = remaining.head
+      remaining = remaining.tail
+      val notElem = !elem
+      newElements = notElem :: newElements
+      newSubs += notElem.sub
+    }
+    new CompressedXYDecompositionImpl(newElements,newSubs)
   }
   
 }
 
 final class CompressedXYDecompositionImpl[N <: Compressed[N]] (
   val elements: List[ComposableElement[N]], 
-  val subsCache: immutable.Set[N])
+  val subsCache: Set[N])
   extends CompressedXYDecomposition[N]
 
 object CompressedXYDecomposition{

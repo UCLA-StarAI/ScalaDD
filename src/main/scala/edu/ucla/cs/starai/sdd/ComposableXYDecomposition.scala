@@ -68,6 +68,10 @@ sealed trait ComposableElement[N <: ComposableSDD[N]] extends Element[N] {
   def mapSub(f: N => N): ComposableElement[N] = {
     new ComposableElementImpl(prime,f(sub))
   }
+  
+  def unary_!(): ComposableElement[N] = {
+    new ComposableElementImpl(prime,!sub)
+  }
 
 }
 
